@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
-project(Compiladores)
+project(Compilador)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(Compiladores src/main.cpp)
+add_executable(Compilador src/main.cpp)
