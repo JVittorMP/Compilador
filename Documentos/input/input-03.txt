@@ -1,0 +1,39 @@
+public class Input03 {
+    public static void main() {
+        double a, b, c, x, y, z;
+        double i, j, k;
+        System.out.println(1 + 3 + 2 * 3);
+        System.out.println(1 / 3);
+        a = 1;
+        b = -2 * 3 - 6 / 6 * 2 + 5;
+        c = 0;
+        x = -b;
+        y = lerDouble();
+        z = 5;
+        if (a <= b) {
+            j = lerDouble();
+            c = a - b;
+            if(j > c) {
+                j = c;
+                if(c > j) {
+                    c = j;
+                }
+            }
+        }
+        while (x < z) {
+            x = y - z;
+        }
+        Morte(x, y, z);
+    }
+
+    public static double Morte(double cnt, double bnt, double ant) {
+        double x, y, z;
+        double g, h, i;
+        x = 2;
+        if (cnt > 2) {
+            System.out.println(cnt);
+            System.out.println(x);
+        }
+        return 1;
+    }
+}
