@@ -1,4 +1,5 @@
 #include "lexer/lexer.cpp"
+#include <fstream>
 
 void iteratorTest() {
     std::vector<int> v{1,2,3,4,5};
@@ -21,8 +22,11 @@ void tokenTest() {
     else std::cout << "diferentes" << std::endl;
 }
 
+using namespace std;
+
 int main() {
     // tokenTest();
-    iteratorTest();
+    // iteratorTest();
+
     return 0;
 }

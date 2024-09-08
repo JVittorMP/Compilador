@@ -2,15 +2,22 @@
 #include "ast.h"
 //#include "abstractSyntaxTree.cpp"
 
+// Métodos que solucionam árvores de expresão e retornam o valor
+double resolveExpresion(ast::Node* node) {
+    return 0;
+}
+
+
+// Métodos para construir a árvore de expressões
 bool isNumber(std::string s) {
-    if(s.empty() ) return false;
+    if(s.empty()) return false;
     if(size(s) > 1 && (s[0] == '-' || s[0] == '+')) s = std::string(s.begin() + 1, s.end());
-    if(std::all_of(s.begin(), s.end(), [](char c) {return isdigit(c);})) return true;
+    if(std::ranges::all_of(s, [](const char c) {return isdigit(c);})) return true;
     return false;
 }
 
-bool isOperand(char c) {
-    return (c == '+' || c == '-' || c == '*' || c == '/');
+bool isOperand(const char c) {
+    return c == '+' || c == '-' || c == '*' || c == '/';
 }
 
 bool isOperand(const std::string & s) {
@@ -18,13 +25,13 @@ bool isOperand(const std::string & s) {
     return isOperand(s[0]);
 }
 
-int priority(char nd) {
+int priority(const char nd) {
     if(nd == '*' || nd == '/') return 2;
     if(nd == '+' || nd == '-') return 1;
     return 0;
 }
 
-int priority(char c1, char c2) {
+int priority(const char c1, const char c2) {
     return priority(c1) >= priority(c2);
 }
 
@@ -39,11 +46,11 @@ std::string pop(std::stack<std::string> & ops) {
     return op;
 }
 
-char pop(std::stack<char> & ops) {
-    const char op = ops.top();
-    ops.pop();
-    return op;
-}
+// char pop(std::stack<char> & ops) {
+//     const char op = ops.top();
+//     ops.pop();
+//     return op;
+// }
 
 ast::Node* pop(std::stack<ast::Node*> & nodes) {
     ast::Node* node = nodes.top();
@@ -51,33 +58,37 @@ ast::Node* pop(std::stack<ast::Node*> & nodes) {
     return node;
 }
 
-ast::Node* buildTree(const std::string & s) {
-    std::stack<ast::Node*> nodes;
-    std::stack<char> ops;
+/*
+ *  Recebe entrada de expressão infixa em formato string
+*/
 
-    for(const auto & nd : s) {
-        if(isdigit(nd)) {
-            nodes.push(new ast::Node({"Num", std::string(1, nd), true}));
-        } else if(isOperand(nd)) {
-            while(!ops.empty() && priority(ops.top(), nd)) {
-                auto node = new ast::Node({"Operator", std::string(1, pop(ops)), true});
-                node->tokens.push_back(pop(nodes));
-                node->tokens.push_back(pop(nodes));
-                nodes.push(node);
-            }
-            ops.push(nd);
-        }
-    }
-    while(!ops.empty()) {
-        auto node = new ast::Node({"Operator", std::string(1, pop(ops)), true});
-        node->tokens.push_back(pop(nodes));
-        node->tokens.push_back(pop(nodes));
-        nodes.push(node);
-    }
-    return nodes.top();
-}
+// ast::Node* buildTree(const std::string & s) {
+//     std::stack<ast::Node*> nodes;
+//     std::stack<char> ops;
+//
+//     for(const auto & nd : s) {
+//         if(isdigit(nd)) {
+//             nodes.push(new ast::Node({"Num", std::string(1, nd), true}));
+//         } else if(isOperand(nd)) {
+//             while(!ops.empty() && priority(ops.top(), nd)) {
+//                 auto node = new ast::Node({"Operator", std::string(1, pop(ops)), true});
+//                 node->tokens.push_back(pop(nodes));
+//                 node->tokens.push_back(pop(nodes));
+//                 nodes.push(node);
+//             }
+//             ops.push(nd);
+//         }
+//     }
+//     while(!ops.empty()) {
+//         auto node = new ast::Node({"Operator", std::string(1, pop(ops)), true});
+//         node->tokens.push_back(pop(nodes));
+//         node->tokens.push_back(pop(nodes));
+//         nodes.push(node);
+//     }
+//     return nodes.top();
+// }
 
-ast::Node* buildTree2(const std::deque<ast::Node*>& entries) {
+ast::Node* buildTree(const std::deque<ast::Node*>& entries) {
     std::stack<ast::Node*> nodes;
     std::stack<std::string> ops;
 

@@ -16,9 +16,11 @@
 //#include "Parser/AST/novo/parseT.cpp"
 //#include "Parser/AST/novo/ast.cpp"
 
+#include "CodeGenerator/generator.cpp"
+
 int main() {
-    //std::string inputFile = "../Documentos/mini-java-exemplo.java";
-    std::string inputFile = "../Documentos/input/input-02.txt";
+    std::string inputFile = "../Documentos/mini-java-exemplo.java";
+    //std::string inputFile = "../Documentos/input/input-03.txt";
 
     std::vector<lex::token> tokens = lex::scan(inputFile);
 
@@ -28,9 +30,9 @@ int main() {
 
     auto it = tokens.begin();
     if(sin::parse(it)) {
-        std::cout << "Tudo Certo!" <<  std::endl << std::endl;
+        std::cout << "Parser: Tudo Certo!" <<  std::endl << std::endl;
     } else {
-        std::cout << "Tudo Errado! Fim dos Tempos!" <<  std::endl;
+        std::cout << "Parser: Tudo Errado! Fim dos Tempos!" <<  std::endl;
         return 0;
     }
 
@@ -39,10 +41,12 @@ int main() {
     explore02(ast);
     std::cout << std::endl << std::endl;
     if(analyse(ast)) {
-        std::cout << "Tudo certo!" << std::endl;
+        std::cout << "Semantic Analysis: Tudo certo!" << std::endl;
     } else {
-        std::cout << "Falha no analisador semantico!" << std::endl;
+        std::cout << "Semantic Analysis: Falha no analisador semantico!" << std::endl;
     }
+
+    generate(ast);
 
 //    ast::Node* ast = ast::buildParseTree(begin);
 //

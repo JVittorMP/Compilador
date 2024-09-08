@@ -1,8 +1,6 @@
 #ifndef COMPILADORES_LEX_H
 #define COMPILADORES_LEX_H
 
-#include "../basic.h"
-
 namespace lex {
 
     typedef struct lexema {

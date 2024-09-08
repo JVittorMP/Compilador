@@ -121,7 +121,6 @@ void getExpression2(ast::Node* & cur) {
             getExpression2(nd);
         }
     }
-    return;
 }
 
 void getCmds(std::deque<ast::Node*> & cmds, ast::Node* cur) {
@@ -156,7 +155,6 @@ void avaluateNegNum(ast::Node* & cur) {
         }
         avaluateNegNum(nd);
     }
-    return;
 }
 
 ast::Node* changeExpressionNode(ast::Node* ex) {
@@ -164,7 +162,7 @@ ast::Node* changeExpressionNode(ast::Node* ex) {
     avaluateNegNum(ex);
     ast::Node* exCpy = ex;
     simplifyExpression(exCpy, v);
-    exCpy = buildTree2(v);
+    exCpy = buildTree(v);
     ex->tokens.clear();
     ex->tokens.push_back(exCpy);
     return ex;
@@ -207,7 +205,7 @@ void orderOutput(ast::Node* & node) {
     ast::Node* & ex = node->tokens[1];
     simplifyExpression(ex, exp);
     ex->tokens.clear();
-    ex->tokens.push_back(buildTree2(exp));
+    ex->tokens.push_back(buildTree(exp));
 }
 
 void getArguments(ast::Node* & node, std::deque<ast::Node*> & v) {
@@ -333,18 +331,16 @@ void removeInit(ast::Node* & root) {
 void compressTest(ast::Node* & node) {
     for(auto & n : node->tokens) {
         if(n->tokens.empty()) continue;
-        else {
-            if(n->type == "DC") {
-                compressStructure(n);
-            } else if(n->type == "CMDS") {
-                compressStructure(n);
-                filterCmds(n);
-            }
-            else if(n->type == "METODO") {
-                compressStructure(n);
-            }
-            compressTest(n);
+        if(n->type == "DC") {
+            compressStructure(n);
+        } else if(n->type == "CMDS") {
+            compressStructure(n);
+            filterCmds(n);
         }
+        else if(n->type == "METODO") {
+            compressStructure(n);
+        }
+        compressTest(n);
     }
 }
 
@@ -356,12 +352,9 @@ ast::Node* compress(ast::Node* & root) {
     root->tokens.pop_front();
 
     removeInit(root);
+    //explore02(root);
     compressTest(root);
     return root;
-}
-
-ast::Node* compress(ast::Node* node, ast::Node* compressed, std::deque<ast::Node*> pilha) {
-    return new ast::Node("compress", "compress", true);
 }
 
 ast::Node* buildAST(std::vector<lex::token>::iterator & token) {

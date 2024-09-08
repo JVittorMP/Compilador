@@ -20,7 +20,7 @@ bool avaluateCommands(ast::Node* node, sem::scopeController & scope) {
             if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
         } else if(cur->value == "=") {
             if(!scope.isValid(cur->tokens[0]->value)) {
-                std::cout << "Variavel [" + cur->tokens[0]->value + " não declarada!" << std::endl;
+                std::cout << "Variavel [" + cur->tokens[0]->value + "] nao declarada!" << std::endl;
                 return false;
             }
             if(cur->tokens[1]->type == "Input") continue;
@@ -28,6 +28,7 @@ bool avaluateCommands(ast::Node* node, sem::scopeController & scope) {
         } else if(cur->value == "if" || cur->value == "while") {
             if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
             avaluateCommands(nd->tokens[2], scope);
+            if(nd->tokens.size() > 3) avaluateCommands(nd->tokens[3]->tokens[1], scope); // Avalia Else
         } else if(cur->type == "Identifier") {
             std::string methodId = cur->value;
             if(!scope.isValidMethod(methodId)) {
@@ -47,9 +48,9 @@ bool avaluateCommands(ast::Node* node, sem::scopeController & scope) {
     return true;
 }
 
-bool computeDeclarations(ast::Node* node, sem::scopeController & scope) {
-    for(auto nd : node->tokens) {
-        for(auto id : nd->tokens[1]->tokens) {
+bool computeDeclarations(const ast::Node* node, sem::scopeController & scope) {
+    for(const auto nd : node->tokens) {
+        for(const auto id : nd->tokens[1]->tokens) {
             if(!scope.declare(id->value)) {
                 std::cout << "Declaracao redundante do identificador [" << id->value << "]" << std::endl;
                 return false;
@@ -94,7 +95,9 @@ bool analyseMethod(ast::Node* node, sem::scopeController & scope) {
     scope.initializeScope(node->tokens[1]->tokens[1]->value);
     for(auto nd : node->tokens) {
         if(nd->type == "SIGNATURE") {
-            if(!computeParams(nd->tokens[2], scope)) return false;
+            if(nd->tokens.size() > 2) {
+                if(!computeParams(nd->tokens[2], scope)) return false;
+            }
         }
         if(nd->type == "RETURN") {
             if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
@@ -111,10 +114,22 @@ bool analyseMethod(ast::Node* node, sem::scopeController & scope) {
 
 bool analyse(ast::Node* root) {
     sem::scopeController scope;
-    // Problema: Sem configuração correta para a assinatura do método Somar no exemplo oficial
+
+    // Armazena a declaração do método 'main'
+    scope.saveSignature("main");
+
+    // Analisa se existe declaração de método
     if(root->tokens.size() > 2) {
         auto signature = root->tokens[2]->tokens[0];
-        scope.saveSignature(signature->tokens[0]->value, signature->tokens[2]->tokens.size());
+        /*
+         * True: Há parâmetros no método
+         * False: Não há parâmetros
+         */
+        if(signature->tokens.size() > 2) {
+            scope.saveSignature(signature->tokens[0]->value, signature->tokens[2]->tokens.size());
+        } else {
+            scope.saveSignature(signature->tokens[0]->value);
+        }
     }
     for(auto nd : root->tokens) {
         if(nd->type == "INIT") {

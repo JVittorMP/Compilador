@@ -2,7 +2,6 @@
 #define COMPILADORES_SEM_H
 
 #include "../basic.h"
-#include "../Parser/AST/ast.h"
 
 namespace sem {
 
@@ -25,27 +24,27 @@ namespace sem {
             return signatures[s];
         }
 
-        void saveSignature(const std::string& s, unsigned qtd) {
+        void saveSignature(const std::string& s, unsigned qtd = 0) {
             signatures[s] = qtd;
         }
 
-        bool isValidMethod(const std::string& id) {
-            return signatures.find(id) != signatures.end();
+        bool isValidMethod(const std::string& id) const {
+            return signatures.contains(id);
         }
 
-        bool isValid(std::string id) {
+        bool isValid(std::string id) const {
             if(id[0] == '-') id.erase(0, 1);
             auto & mp = escopos.back().second;
-            return mp.find(id) != mp.end();
+            return mp.contains(id);
         }
 
-        void updateValue(const std::string & id, double val) {
+        void updateValue(const std::string & id, const double val) {
             escopos.back().second[id] = val;
         }
 
-        bool declare(const std::string & id, double val = 0) {
+        bool declare(const std::string & id, const double val = 0) {
             auto & mp = escopos.back().second;
-            if(mp.find(id) != mp.end()) return false;
+            if(mp.contains(id)) return false;
             escopos.back().second[id] = val;
             return true;
         }
