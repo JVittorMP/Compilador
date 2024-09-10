@@ -34,119 +34,143 @@ std::string getOperatorCmd(const std::string& s) {
     return "ERROR";
 }
 
-void getExpression(ast::Node *node, sem::scopeController & scope, std::ofstream & code) {
+void getExpression(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
     if(node->type == "Num") {
-        code << cmd::Cmd("CRCT", {node->value}) << std::endl;
+        auto* crct = new cmd::Cmd("CRCT", {node->value});
+        code.saveCommand(crct);
         return;
     }
     if(node->type == "Identifier") {
-        code << cmd::Cmd("CRVL", {node->value}) << std::endl;
+        auto* crvl = new cmd::Cmd("CRVL", {node->value});
+        code.saveCommand(crvl);
         return;
     }
     getExpression(node->tokens[1], scope, code);
     getExpression(node->tokens[0], scope, code);
-    code << cmd::Cmd(getOperatorCmd(node->value)) << std::endl;
+    auto* opr = new cmd::Cmd(getOperatorCmd(node->value));
+    code.saveCommand(opr);
 }
 
-void getCondition(ast::Node *node, sem::scopeController & scope, std::ofstream & code) {
+void getCondition(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
     getExpression(node->tokens[0]->tokens[0], scope, code);
     getExpression(node->tokens[2]->tokens[0], scope, code);
-    code << cmd::Cmd(getComparisonCmd(node->tokens[1]->tokens[0]->value)) << std::endl;
-    code << cmd::Cmd("DSVF") << std::endl;
+    auto* comp = new cmd::Cmd(getComparisonCmd(node->tokens[1]->tokens[0]->value));
+    code.saveCommand(comp);
+    auto* dsvf = new cmd::Cmd("DSVF");
+    code.saveCommand(dsvf);
+    code.initializeJump(dsvf);
 }
 
 // → LEIT : Lê um dado de entrada para o topo da pilha
 // → ELIN : Indica Inicio de ELSE
 // → ELND : Indica Fim de ELSE
 // → DSVX : Indica Fim de IF/WHILE
-void generateCommands(ast::Node *node, sem::scopeController & scope, std::ofstream & code) {
+void generateCommands(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
     for(auto nd : node->tokens) {
         auto cur = nd->tokens[0];
         if(cur->value == "System.out.println") {
             getExpression(nd->tokens[1]->tokens[0], scope, code);
-            code << cmd::Cmd("IMPR") << std::endl;
+            auto* impr = new cmd::Cmd("IMPR");
+            code.saveCommand(impr);
         } else if(cur->value == "=") {
             if(cur->tokens[1]->type == "Input") {
-                code << cmd::Cmd("LEIT") << std::endl;
+                auto* leit = new cmd::Cmd("LEIT");
+                code.saveCommand(leit);
             } else {
                 getExpression(cur->tokens[1]->tokens[0], scope, code);
             }
-            code << cmd::Cmd("ARMZ", {cur->tokens[0]->value}) << std::endl;
+            auto* armz = new cmd::Cmd("ARMZ", {cur->tokens[0]->value});
+            code.saveCommand(armz);
         } else if(cur->value == "if") {
+            // Para aumentar os passos dos elses para cada if
+            code.ifsc += nd->tokens.size() > 3;
             auto cond = nd->tokens[1];
             auto cmds = nd->tokens[2];
             getCondition(cond, scope, code);
             generateCommands(cmds, scope, code);
+            code.endJump();
+
+            // Não tem else
             if(nd->tokens.size() > 3) {
-                code << cmd::Cmd("ELIN") << std::endl;
+                code.ifsc--;
+                auto* dsvf = new cmd::Cmd("DSVF");
+                code.saveCommand(dsvf);
+                code.initializeJump(dsvf);
                 generateCommands(nd->tokens[3]->tokens[1], scope, code);
-                code << cmd::Cmd("ELND") << std::endl;
-            } else {
-                code << cmd::Cmd("DSVX") << std::endl;
+                code.endJump();
             }
+
         } else if(cur->value == "while") {
+            unsigned retorno = code.getLine() + 1;
             auto cond = nd->tokens[1];
             auto cmds = nd->tokens[2];
             getCondition(cond, scope, code);
             generateCommands(cmds, scope, code);
-            if(nd->tokens.size() > 3) {
-                code << cmd::Cmd("ELIN") << std::endl;
-                generateCommands(nd->tokens[3]->tokens[1], scope, code);
-                code << cmd::Cmd("ELND") << std::endl;
-            } else {
-                code << cmd::Cmd("DSVX") << std::endl;
-            }
+
             // Indicar endereço do início do while
-            code << cmd::Cmd("DSVI", {"ENDEREÇO PARA VOLTAR"}) << std::endl;
+            auto* dsvi = new cmd::Cmd("DSVI", {std::to_string(retorno)});
+            code.saveCommand(dsvi);
+            code.endJump();
         } else if(cur->type == "Identifier") {
-            code << cmd::Cmd("PUSHER", {"ENDERECO PARA RETORNAR APOS FIM DO PROCEDIMENTO"}) << std::endl;
-            for(auto id : nd->tokens[1]->tokens) {
-                code << cmd::Cmd("PARAM ", {id->value}) << std::endl;
+            auto* pusher = new cmd::Cmd("PUSHER", {"ENDERECO PARA RETORNAR APOS FIM DO PROCEDIMENTO"});
+            code.saveCommand(pusher);
+            for(const auto id : nd->tokens[1]->tokens) {
+                auto* param = new cmd::Cmd("PARAM ", {id->value});
+                code.saveCommand(param);
             }
-            code << cmd::Cmd("CHPR", {"ENDERECO DO PROCEDIMENTO"}) << std::endl;
+            auto* chpr = new cmd::Cmd("CHPR", {"ENDERECO DO PROCEDIMENTO"});
+            code.saveCommand(chpr);
         }
     }
 }
 
-bool generateDeclarations(const ast::Node* node, sem::scopeController & scope, std::ofstream & code) {
+bool generateDeclarations(const ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     for(const auto nd : node->tokens) {
         for(const auto id : nd->tokens[1]->tokens) {
             scope.declare(id->value);
-            code << cmd::Cmd("ALME", {id->value}) << std::endl;
+            auto* alme = new cmd::Cmd("ALME", {id->value});
+            code.saveCommand(alme);
         }
     }
     return true;
 }
 
-bool generateSignature(const ast::Node* node, sem::scopeController & scope, std::ofstream & code) {
+bool generateSignature(const ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     // Caso não haja parâmetros
     if(node->tokens.size() < 3) return true;
     for(const auto nd : node->tokens[2]->tokens) {
         const auto id = nd->tokens[1];
         scope.declare(id->value);
-        code << cmd::Cmd("ALME", {id->value}) << std::endl;
+        auto* alme = new cmd::Cmd("ALME", {id->value});
+        code.saveCommand(alme);
     }
     return true;
 }
 
-bool generateReturn(const ast::Node* node, sem::scopeController & scope, std::ofstream & code) {
+bool generateReturn(const ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     getExpression(node->tokens[1]->tokens[0], scope, code);
-    code << cmd::Cmd("RTPR") << std::endl;
+    auto* rtpr = new cmd::Cmd("RTPR");
+    code.saveCommand(rtpr);
     return true;
 }
 
-void generateMain(ast::Node *node, sem::scopeController & scope, std::ofstream & code) {
+void generateMain(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
+    auto* inpp = new cmd::Cmd("INPP");
+    code.saveCommand(inpp);
     scope.initializeScope("main");
     for(auto nd : node->tokens) {
         if(nd->type == "DC") generateDeclarations(nd, scope, code);
         if(nd->type == "CMDS") generateCommands(nd, scope, code);
     }
+    auto* para = new cmd::Cmd("PARA");
+    code.saveCommand(para);
 }
 
 // -> Proc, chamada de procedimento
-void generateMethod(ast::Node *node, sem::scopeController & scope, std::ofstream & code) {
+void generateMethod(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
     scope.initializeScope(node->tokens[0]->tokens[0]->value);
-    code << cmd::Cmd("PROC", {node->tokens[0]->tokens[0]->value}) << std::endl;
+    auto* proc = new cmd::Cmd("PROC", {node->tokens[0]->tokens[0]->value});
+    code.saveCommand(proc);
     for(const auto nd : node->tokens) {
         if(nd->type == "SIGNATURE") generateSignature(nd, scope, code);
         if(nd->type == "DC") generateDeclarations(nd, scope, code);
@@ -164,15 +188,7 @@ void generateMethod(ast::Node *node, sem::scopeController & scope, std::ofstream
 
 bool generate(ast::Node* root) {
     sem::scopeController scope;
-
-    std::ofstream code("../Documentos/code/code.txt");
-
-    if(!code) {
-        std::cout << "Error in creating file!!!";
-        return false;
-    } else {
-        std::cout << "Success in creating file!!!";
-    }
+    cmd::Code code("../Documentos/code/code.txt");
 
     // Analisa se existe declaração de método
     if(root->tokens.size() > 2) {
@@ -189,15 +205,19 @@ bool generate(ast::Node* root) {
         }
     }
 
-    code << cmd::Cmd("INPP") << std::endl;
-    for(auto nd : root->tokens) {
-        if(nd->type == "INIT") {
-            generateMain(nd, scope, code);
-            code << cmd::Cmd("PARA") << std::endl;
-        } else if(nd->type == "METODO") {
-            generateMethod(nd, scope, code);
-        }
-    }
-    code.close();
+
+    if(root->tokens.size() == 3) generateMethod(root->tokens[2], scope, code);
+    generateMain(root->tokens[1], scope, code);
+    code.generateCode();
+
+    // for(auto nd : root->tokens) {
+    //     if(nd->type == "INIT") {
+    //         generateMain(nd, scope, code);
+    //         code.saveCommand(cmd::Cmd("PARA"));
+    //     } else if(nd->type == "METODO") {
+    //         generateMethod(nd, scope, code);
+    //     }
+    // }
+
     return true;
 }

@@ -6,7 +6,7 @@
 namespace sem {
 
     class scopeController {
-        public:
+    public:
         std::vector<std::pair<std::string, std::unordered_map<std::string, double>>> escopos;
         std::unordered_map<std::string, unsigned> signatures;
 
