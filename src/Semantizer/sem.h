@@ -29,22 +29,26 @@ namespace sem {
         }
 
         bool isValidMethod(const std::string& id) const {
-            return signatures.contains(id);
+            return signatures.find(id) != signatures.end();
         }
 
         bool isValid(std::string id) const {
             if(id[0] == '-') id.erase(0, 1);
             auto & mp = escopos.back().second;
-            return mp.contains(id);
+            return mp.find(id) != mp.end();
         }
 
         void updateValue(const std::string & id, const double val) {
             escopos.back().second[id] = val;
         }
 
+        double returnVarValue(const std::string & id) {
+            return escopos.back().second[id];
+        }
+
         bool declare(const std::string & id, const double val = 0) {
             auto & mp = escopos.back().second;
-            if(mp.contains(id)) return false;
+            if(mp.find(id) != mp.end()) return false;
             escopos.back().second[id] = val;
             return true;
         }
@@ -53,7 +57,7 @@ namespace sem {
             escopos.emplace_back(s, std::unordered_map<std::string, double>());
         }
 
-        void EndScope() {
+        void endScope() {
             escopos.pop_back();
         }
     };

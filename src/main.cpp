@@ -19,8 +19,8 @@
 #include "CodeGenerator/generator.cpp"
 
 int main() {
-    //std::string inputFile = "../Documentos/mini-java-exemplo.java";
-    std::string inputFile = "../Documentos/input/input-02.txt";
+    std::string inputFile = "../Documentos/mini-java-exemplo.java";
+    //std::string inputFile = "../Documentos/input/input-03.txt";
 
     std::vector<lex::token> tokens = lex::scan(inputFile);
 

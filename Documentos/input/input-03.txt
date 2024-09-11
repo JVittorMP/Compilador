@@ -17,8 +17,12 @@ public class Input03 {
                 j = c;
                 if(c > j) {
                     c = j;
+                } else {
+                    k = 2;
                 }
+                c = k + j;
             }
+            c = c + 1;
         } else {
             System.out.println(1 / 3);
             k = 90;

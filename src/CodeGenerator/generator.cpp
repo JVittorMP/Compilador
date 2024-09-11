@@ -88,20 +88,23 @@ void generateCommands(ast::Node *node, sem::scopeController & scope, cmd::Code &
             auto cmds = nd->tokens[2];
             getCondition(cond, scope, code);
             generateCommands(cmds, scope, code);
-            code.endJump();
+            //code.endJump();
 
             // Não tem else
             if(nd->tokens.size() > 3) {
                 code.ifsc--;
                 auto* dsvf = new cmd::Cmd("DSVF");
                 code.saveCommand(dsvf);
+                code.endJump();
                 code.initializeJump(dsvf);
                 generateCommands(nd->tokens[3]->tokens[1], scope, code);
+                code.endJump();
+            } else {
                 code.endJump();
             }
 
         } else if(cur->value == "while") {
-            unsigned retorno = code.getLine() + 1;
+            unsigned retorno = code.getLine();
             auto cond = nd->tokens[1];
             auto cmds = nd->tokens[2];
             getCondition(cond, scope, code);
@@ -112,14 +115,16 @@ void generateCommands(ast::Node *node, sem::scopeController & scope, cmd::Code &
             code.saveCommand(dsvi);
             code.endJump();
         } else if(cur->type == "Identifier") {
-            auto* pusher = new cmd::Cmd("PUSHER", {"ENDERECO PARA RETORNAR APOS FIM DO PROCEDIMENTO"});
+            auto* pusher = new cmd::Cmd("PSHR");
             code.saveCommand(pusher);
+            code.initializeJump(pusher);
             for(const auto id : nd->tokens[1]->tokens) {
-                auto* param = new cmd::Cmd("PARAM ", {id->value});
+                auto* param = new cmd::Cmd("PARM", {id->value});
                 code.saveCommand(param);
             }
-            auto* chpr = new cmd::Cmd("CHPR", {"ENDERECO DO PROCEDIMENTO"});
+            auto* chpr = new cmd::Cmd("CHPR", {"1"});
             code.saveCommand(chpr);
+            code.endJump();
         }
     }
 }
@@ -135,13 +140,16 @@ bool generateDeclarations(const ast::Node* node, sem::scopeController & scope, c
     return true;
 }
 
+/*
+ * DESM -> Desaloca um valor do topo para argumentos de função
+ */
 bool generateSignature(const ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     // Caso não haja parâmetros
     if(node->tokens.size() < 3) return true;
     for(const auto nd : node->tokens[2]->tokens) {
         const auto id = nd->tokens[1];
         scope.declare(id->value);
-        auto* alme = new cmd::Cmd("ALME", {id->value});
+        auto* alme = new cmd::Cmd("DESM", {id->value});
         code.saveCommand(alme);
     }
     return true;
