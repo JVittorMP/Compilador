@@ -26,10 +26,11 @@ public class Input03 {
         } else {
             System.out.println(1 / 3);
             k = 90;
+            x = 1;
             Morte(a, b, c);
         }
         while (x < z) {
-            x = y - z;
+            x = y + z;
         }
         Morte(x, y, z);
     }

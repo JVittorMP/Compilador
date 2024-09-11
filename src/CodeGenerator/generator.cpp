@@ -93,7 +93,7 @@ void generateCommands(ast::Node *node, sem::scopeController & scope, cmd::Code &
             // Não tem else
             if(nd->tokens.size() > 3) {
                 code.ifsc--;
-                auto* dsvf = new cmd::Cmd("DSVF");
+                auto* dsvf = new cmd::Cmd("DSVI");
                 code.saveCommand(dsvf);
                 code.endJump();
                 code.initializeJump(dsvf);
@@ -118,10 +118,15 @@ void generateCommands(ast::Node *node, sem::scopeController & scope, cmd::Code &
             auto* pusher = new cmd::Cmd("PSHR");
             code.saveCommand(pusher);
             code.initializeJump(pusher);
-            for(const auto id : nd->tokens[1]->tokens) {
+            auto v = nd->tokens[1]->tokens;
+            std::for_each(v.rbegin(), v.rend(), [&code](ast::Node* id){
                 auto* param = new cmd::Cmd("PARM", {id->value});
                 code.saveCommand(param);
-            }
+            });
+//            for(const auto id : nd->tokens[1]->tokens) {
+//                auto* param = new cmd::Cmd("PARM", {id->value});
+//                code.saveCommand(param);
+//            }
             auto* chpr = new cmd::Cmd("CHPR", {"1"});
             code.saveCommand(chpr);
             code.endJump();

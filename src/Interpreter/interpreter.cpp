@@ -87,6 +87,7 @@ void interpret(std::deque<cmd::Cmd> & cmds, std::stack<double> & pDados, sem::sc
                 break;
             case cmd::command::DSVI:
                 i = std::stod(cmd.args[0]);
+                jump = true;
                 break;
             case cmd::command::IMPR: {
                 std::cout << pop(pDados) << std::endl;
@@ -130,11 +131,13 @@ void interpret(std::deque<cmd::Cmd> & cmds, std::stack<double> & pDados, sem::sc
                 break;
             case cmd::command::CHPR:
                 i = std::stod(cmd.args[0]);
+                jump = true;
                 break;
             case cmd::command::RTPR: {
                 double ans = pop(pDados);
                 scope.endScope();
                 i = pop(pDados);
+                jump = true;
                 break;
             }
             case cmd::command::PARM:
