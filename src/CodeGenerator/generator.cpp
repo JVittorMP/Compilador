@@ -1,10 +1,7 @@
-#include "../basic.h"
-#include "../Parser/AST/ast.h"
+#include "cmd.h"
 #include "../Semantizer/sem.h"
 
-#include "./cmd.h"
-
-std::string getComparisonCmd(const std::string& s) {
+std::string getComparisonCmd02(const std::string& s) {
 
     /*
      *
@@ -26,7 +23,7 @@ std::string getComparisonCmd(const std::string& s) {
     return "ERROR";
 }
 
-std::string getOperatorCmd(const std::string& s) {
+std::string getOperatorCmd02(const std::string& s) {
     if(s == "+") return "SOMA";
     if(s == "-") return "SUBT";
     if(s == "*") return "MULT";
@@ -34,27 +31,27 @@ std::string getOperatorCmd(const std::string& s) {
     return "ERROR";
 }
 
-void getExpression(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
-    if(node->type == "Num") {
+void getExpression(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
+    if(node->type.pattern == lex::Type::pattern::NUM) {
         auto* crct = new cmd::Cmd("CRCT", {node->value});
         code.saveCommand(crct);
         return;
     }
-    if(node->type == "Identifier") {
+    if(node->type.pattern == lex::Type::pattern::IDENTIFIER) {
         auto* crvl = new cmd::Cmd("CRVL", {node->value});
         code.saveCommand(crvl);
         return;
     }
     getExpression(node->tokens[1], scope, code);
     getExpression(node->tokens[0], scope, code);
-    auto* opr = new cmd::Cmd(getOperatorCmd(node->value));
+    auto* opr = new cmd::Cmd(getOperatorCmd02(node->value));
     code.saveCommand(opr);
 }
 
-void getCondition(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
+void getCondition(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     getExpression(node->tokens[0]->tokens[0], scope, code);
     getExpression(node->tokens[2]->tokens[0], scope, code);
-    auto* comp = new cmd::Cmd(getComparisonCmd(node->tokens[1]->tokens[0]->value));
+    auto* comp = new cmd::Cmd(getComparisonCmd02(node->tokens[1]->tokens[0]->value));
     code.saveCommand(comp);
     auto* dsvf = new cmd::Cmd("DSVF");
     code.saveCommand(dsvf);
@@ -65,7 +62,7 @@ void getCondition(ast::Node *node, sem::scopeController & scope, cmd::Code & cod
 // → ELIN : Indica Inicio de ELSE
 // → ELND : Indica Fim de ELSE
 // → DSVX : Indica Fim de IF/WHILE
-void generateCommands(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
+void generateCommands(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     for(auto nd : node->tokens) {
         auto cur = nd->tokens[0];
         if(cur->value == "System.out.println") {
@@ -73,7 +70,7 @@ void generateCommands(ast::Node *node, sem::scopeController & scope, cmd::Code &
             auto* impr = new cmd::Cmd("IMPR");
             code.saveCommand(impr);
         } else if(cur->value == "=") {
-            if(cur->tokens[1]->type == "Input") {
+            if(cur->tokens[1]->type.pattern == lex::Type::pattern::INPUT) {
                 auto* leit = new cmd::Cmd("LEIT");
                 code.saveCommand(leit);
             } else {
@@ -114,7 +111,7 @@ void generateCommands(ast::Node *node, sem::scopeController & scope, cmd::Code &
             auto* dsvi = new cmd::Cmd("DSVI", {std::to_string(retorno)});
             code.saveCommand(dsvi);
             code.endJump();
-        } else if(cur->type == "Identifier") {
+        } else if(cur->type.pattern == lex::Type::pattern::IDENTIFIER) {
             auto* pusher = new cmd::Cmd("PSHR");
             code.saveCommand(pusher);
             code.initializeJump(pusher);
@@ -167,28 +164,28 @@ bool generateReturn(const ast::Node* node, sem::scopeController & scope, cmd::Co
     return true;
 }
 
-void generateMain(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
+void generateMain(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     auto* inpp = new cmd::Cmd("INPP");
     code.saveCommand(inpp);
     scope.initializeScope("main");
     for(auto nd : node->tokens) {
-        if(nd->type == "DC") generateDeclarations(nd, scope, code);
-        if(nd->type == "CMDS") generateCommands(nd, scope, code);
+        if(nd->type.pattern == lex::Type::pattern::DC) generateDeclarations(nd, scope, code);
+        if(nd->type.pattern == lex::Type::pattern::CMDS) generateCommands(nd, scope, code);
     }
     auto* para = new cmd::Cmd("PARA");
     code.saveCommand(para);
 }
 
 // -> Proc, chamada de procedimento
-void generateMethod(ast::Node *node, sem::scopeController & scope, cmd::Code & code) {
+void generateMethod(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     scope.initializeScope(node->tokens[0]->tokens[0]->value);
     auto* proc = new cmd::Cmd("PROC", {node->tokens[0]->tokens[0]->value});
     code.saveCommand(proc);
     for(const auto nd : node->tokens) {
-        if(nd->type == "SIGNATURE") generateSignature(nd, scope, code);
-        if(nd->type == "DC") generateDeclarations(nd, scope, code);
-        if(nd->type == "CMDS") generateCommands(nd, scope, code);
-        if(nd->type == "RETURN") generateReturn(nd, scope, code);
+        if(nd->type.pattern == lex::Type::pattern::SIGNATURE) generateSignature(nd, scope, code);
+        if(nd->type.pattern == lex::Type::pattern::DC) generateDeclarations(nd, scope, code);
+        if(nd->type.pattern == lex::Type::pattern::CMDS) generateCommands(nd, scope, code);
+        if(nd->type.pattern == lex::Type::pattern::RETURN) generateReturn(nd, scope, code);
     }
 }
 
@@ -199,7 +196,7 @@ void generateMethod(ast::Node *node, sem::scopeController & scope, cmd::Code & c
  *
  */
 
-bool generate(ast::Node* root) {
+bool generate(const ast::Node* root) {
     sem::scopeController scope;
     cmd::Code code("../Documentos/code/code.txt");
 
@@ -219,7 +216,9 @@ bool generate(ast::Node* root) {
     }
 
 
-    if(root->tokens.size() == 3) generateMethod(root->tokens[2], scope, code);
+    if(root->tokens.size() == 3) {
+        generateMethod(root->tokens[2], scope, code);
+    }
     generateMain(root->tokens[1], scope, code);
     code.generateCode();
 

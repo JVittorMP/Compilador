@@ -12,7 +12,7 @@ João Vittor de Moura Padilha - 202111310018
     #include "lex.h"
 
     #undef YY_DECL
-    #define YY_DECL int scan(std::vector<lex::token> & tokens)
+    #define YY_DECL int scan(std::deque<lex::token> & tokens)
 
     unsigned line = 1;
 %}
@@ -28,15 +28,15 @@ Input          (lerDouble\(\))
 /*** rules for inputs ***/
 %%
 
-{Keyword}		    { tokens.push_back({"Keyword", yytext, line}); }
-{Input}             { tokens.push_back({"Input", yytext, line}); }
-{Identifier}		{ tokens.push_back({"Identifier", yytext, line}); }
-{Num}			    { tokens.push_back({"Num", yytext, line}); }
-{Operator}		    { tokens.push_back({"Operator", yytext, line}); }
-{Punctuation}		{ tokens.push_back({"Punctuation", yytext, line}); }
+{Keyword}		    { tokens.push_back({lex::Type("Keyword"), yytext, line}); }
+{Input}             { tokens.push_back({"lex::Type(Input"), yytext, line}); }
+{Identifier}		{ tokens.push_back({"lex::Type(Identifier"), yytext, line}); }
+{Num}			    { tokens.push_back({"lex::Type(Num"), yytext, line}); }
+{Operator}		    { tokens.push_back({"lex::Type(Operator"), yytext, line}); }
+{Punctuation}		{ tokens.push_back({"lex::Type(Punctuation"), yytext, line}); }
 {Whitespace}		{ /* Whitespace Ignored */ }
 \n                  { line++;}
-<<EOF>>             { tokens.push_back({"End", "$", line}); return 0;}
+<<EOF>>             { tokens.push_back({lex::Type("End"), "$", line}); return 0;}
 .			        { printf("[Invalid Input (Lexical Error) on Line %d, %s]\n", line, yytext);}
 
 %%

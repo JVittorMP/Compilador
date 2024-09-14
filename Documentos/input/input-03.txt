@@ -30,7 +30,8 @@ public class Input03 {
             Morte(a, b, c);
         }
         while (x < z) {
-            x = y + z;
+            System.out.println(-9999);
+            x = x + z;
         }
         Morte(x, y, z);
     }

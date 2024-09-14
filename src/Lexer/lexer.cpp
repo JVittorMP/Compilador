@@ -2,9 +2,9 @@
 #include "lex.yy.c"
 
 namespace lex {
-    std::vector<lex::token> scan(std::string input) {
+    std::deque<lex::token> scan(std::string input) {
         yyin = fopen(input.data(), "r");
-        std::vector<lex::token> tokens;
+        std::deque<lex::token> tokens;
         ::scan(tokens);
         return tokens;
     }

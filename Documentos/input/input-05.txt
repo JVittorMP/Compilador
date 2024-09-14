@@ -1,0 +1,22 @@
+public class teste {
+    public static void main() {
+        double a, b, n;
+        a = 1;
+        b = 1;
+        n = lerDouble();
+        System.out.println(1);
+        System.out.println(1);
+        fib(a, b, n);
+    }
+
+    public static double fib(double a, double b, double n) {
+        double x;
+        x = a + b;
+        if(n >= 1) {
+            System.out.println(x);
+            n = n + 1;
+            print(b, x, n);
+        }
+        return 0;
+    }
+}

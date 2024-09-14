@@ -1,0 +1,60 @@
+PROG	            public      public class id { <INIT> <METODO> }
+INIT                public      public static void main () { <DC> <CMDS> }
+METODO [$]	        public      public static <TIPO> id ( <PARAMS> )  { <DC> <CMDS> return <EXPRESSAO> ; }
+PARAMS [$]	        double      <TIPO> id<MAIS_PARAMS>
+MAIS_PARAMS [$] 	,           , <PARAMS>
+DC [$]	            double      <VAR> <MAIS_DC>
+MAIS_DC [$]	        ;           ; <DC>
+VAR	                double      <TIPO> <VARS>
+VARS	            <id>        id<MAIS_VAR>
+MAIS_VAR [$]	    ,           ,<VARS>
+TIPO	            double      double
+CMDS [$]	        if          <CONDITIONAL_CMD><CMDS>
+	                while
+	                System      <CMD>;<CMDS>
+	                <id>
+CONDITIONAL_CMD     if          if ( <CONDICAO> )  { <CMDS> } <PFALSA>
+                    while       while ( <CONDICAO> )  { <CMDS> }
+CMD                 System      System.out.println (<EXPRESSAO>)
+                    <id>        id <RESTO_IDENT>
+PFALSA [$]	        else        else { <CMDS> }
+RESTO_IDENT	        =           = <EXP_IDENT>
+	                (           (<LISTA_ARG>)
+LISTA_ARG [$]	    <id>        <ARGUMENTOS>
+ARGUMENTOS	        <id>        id <MAIS_IDENT>
+MAIS_IDENT [$]	    ,           , <ARGUMENTOS>
+EXP_IDENT	        -           <EXPRESSAO>
+                    <id>
+                    <num>
+                    (
+                    <input>     lerDouble()
+CONDICAO	        -           <EXPRESSAO> <RELACAO> <EXPRESSAO>
+                    <id>
+                    <num>
+                    (
+RELACAO	            ==          ==
+                    !=          !=
+                    >=          >=
+                    <=          <=
+                    >           >
+                    <           <
+EXPRESSAO	        -           <TERMO> <OUTROS_TERMOS>
+                    <id>
+                    <num>
+                    (
+TERMO	            -           <OP_UN> <FATOR> <MAIS_FATORES>
+                    <id>
+                    <num>
+                    (
+OP_UN [$]	        -           -
+FATOR	            <id>        id
+                    <num>       numero_real
+                    (           (<EXPRESSAO>)
+OUTROS_TERMOS [$]	+           <OP_AD> <TERMO> <OUTROS_TERMOS>
+	                -
+OP_AD	            +           +
+	                -           -
+MAIS_FATORES [$]	*           <OP_MUL> <FATOR> <MAIS_FATORES>
+	                /
+OP_MUL	            *           *
+	                /           /

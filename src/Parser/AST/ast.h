@@ -10,46 +10,33 @@ namespace ast {
 
     class Node {
     public:
-        std::string type;
-        std::string value;
-        bool terminal = true;
-        std::deque<Node*> tokens;
-
-        Node() = default;
-
-        Node(std::string type, std::string value, bool terminal):
-            type(std::move(type)), value(std::move(value)), terminal(terminal) {}
-
-        bool operator==(const Node* & node) const {
-            return std::tie(this->type, this->value, this->terminal) == std::tie(node->type, node->value, node->terminal);
-        }
-    };
-
-    class Node02 {
-    public:
         lex::Type type;
         std::string value;
         unsigned line = 0;
-        std::deque<Node02*> tokens;
+        std::deque<Node*> tokens;
 
-        Node02() = default;
-        explicit Node02(lex::Type type):
+        Node() = default;
+        explicit Node(lex::Type type):
             type(type), value(type.asValue()) {}
-        Node02(lex::Type type, std::string value):
+        Node(lex::Type type, std::string value):
             type(type), value(std::move(value)) {}
-        explicit Node02(lex::token02 t):
+        explicit Node(lex::token t):
             type(t.type), value(t.value), line(t.linha) {}
 
-        static Node02* pointer(lex::Type type, std::string value) {
-            return new Node02(type, std::move(value));
+        static Node* pointer(lex::Type type, std::string value) {
+            return new Node(type, std::move(value));
         }
 
-        static Node02* pointer(lex::Type type) {
-            return new Node02(type);
+        static Node* pointer(lex::Type type) {
+            return new Node(type);
         }
 
-        static Node02* pointer(lex::token02 t) {
-            return new Node02(std::move(t));
+        static Node* pointer(lex::token t) {
+            return new Node(std::move(t));
+        }
+
+        bool operator==(const Node* & node) const {
+            return std::tie(this->type, this->value) == std::tie(node->type, node->value);
         }
     };
 

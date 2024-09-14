@@ -1,491 +1,576 @@
 #include "sin.h"
+#include "AST/ast.h"
 
-int findNonTerminal(unsigned lexema_type, std::vector<lex::token>::iterator & token) {
-    switch (lexema_type) {
-        case lex::PROG :
-            if(sin::PROG(token)) return SUCCESS;
+std::string tab(int i) {
+    return std::string(i * 3, ' ');
+}
+
+void exploreTNode(ast::Node* node, int i = 0) {
+    for(int j = 0; j < size(node->tokens); j++) {
+        auto n = node->tokens[j];
+        std::cout << std::endl << tab(i) << "[(" << std::to_string(i) << ":" << std::to_string(j) << "):" << n->type.asString() << ", " << n->value << "]";
+        exploreTNode(n, i + 1);
+    }
+}
+
+void exploreNode(ast::Node* node, int i = 0) {
+    std::cout << std::endl << tab(i) << "[(0:0):" << node->type.asString() << ", " << node->value << "]";
+    exploreTNode(node, i + 1);
+}
+
+int PROG(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int INIT(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int METODO(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int PARAMS(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int MAIS_PARAMS(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int DC(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int MAIS_DC(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int VAR(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int VARS(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int MAIS_VAR(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int TIPO(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int CMDS(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int CONDITIONAL_CMD(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int CMD(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int PFALSA(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int RESTO_IDENT(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int LISTA_ARG(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int ARGUMENTOS(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int MAIS_IDENT(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int EXP_IDENT(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int CONDICAO(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int RELACAO(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int EXPRESSAO(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int TERMO(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int OP_UN(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int FATOR(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int OUTROS_TERMOS(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int OP_AD(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int MAIS_FATORES(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+int OP_MUL(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+
+ast::Node* parse(ast::Node* node, std::deque<lex::token>::iterator & tokens);
+
+int findNonTerminal(enum lex::Type::pattern p, ast::Node* node, std::deque<lex::token>::iterator & token) {
+    switch (p) {
+        case lex::Type::pattern::PROG :
+            if(PROG(node, token)) return SUCCESS;
             return FAIL;
-        case lex::INIT :
-            if(sin::INIT(token)) return SUCCESS;
+        case lex::Type::pattern::INIT :
+            if(INIT(node, token)) return SUCCESS;
             return FAIL;
-        case lex::METODO:
-            if(sin::METODO(token)) return SUCCESS;
+        case lex::Type::pattern::METODO:
+            if(METODO(node, token)) return SUCCESS;
             return FAIL;
-        case lex::PARAMS:
-            if(sin::PARAMS(token)) return SUCCESS;
+        case lex::Type::pattern::PARAMS:
+            if(PARAMS(node, token)) return SUCCESS;
             return FAIL;
-        case lex::MAIS_PARAMS:
-            if(sin::MAIS_PARAMS(token)) return SUCCESS;
+        case lex::Type::pattern::MAIS_PARAMS:
+            if(MAIS_PARAMS(node, token)) return SUCCESS;
             return FAIL;
-        case lex::DC:
-            if(sin::DC(token)) return SUCCESS;
+        case lex::Type::pattern::DC:
+            if(DC(node, token)) return SUCCESS;
             return FAIL;
-        case lex::MAIS_DC:
-            if(sin::MAIS_DC(token)) return SUCCESS;
+        case lex::Type::pattern::MAIS_DC:
+            if(MAIS_DC(node, token)) return SUCCESS;
             return FAIL;
-        case lex::VAR:
-            if(sin::VAR(token)) return SUCCESS;
+        case lex::Type::pattern::VAR:
+            if(VAR(node, token)) return SUCCESS;
             return FAIL;
-        case lex::VARS:
-            if(sin::VARS(token)) return SUCCESS;
+        case lex::Type::pattern::VARS:
+            if(VARS(node, token)) return SUCCESS;
             return FAIL;
-        case lex::MAIS_VAR:
-            if(sin::MAIS_VAR(token)) return SUCCESS;
+        case lex::Type::pattern::MAIS_VAR:
+            if(MAIS_VAR(node, token)) return SUCCESS;
             return FAIL;
-        case lex::TIPO:
-            if(sin::TIPO(token)) return SUCCESS;
+        case lex::Type::pattern::TIPO:
+            if(TIPO(node, token)) return SUCCESS;
             return FAIL;
-        case lex::CMDS:
-            if(sin::CMDS(token)) return SUCCESS;
+        case lex::Type::pattern::CMDS:
+            if(CMDS(node, token)) return SUCCESS;
             return FAIL;
-        case lex::CONDITIONAL_CMD:
-            if(sin::CONDITIONAL_CMD(token)) return SUCCESS;
+        case lex::Type::pattern::CONDITIONAL_CMD:
+            if(CONDITIONAL_CMD(node, token)) return SUCCESS;
             return FAIL;
-        case lex::CMD:
-            if(sin::CMD(token)) return SUCCESS;
+        case lex::Type::pattern::CMD:
+            if(CMD(node, token)) return SUCCESS;
             return FAIL;
-        case lex::PFALSA:
-            if(sin::PFALSA(token)) return SUCCESS;
+        case lex::Type::pattern::PFALSA:
+            if(PFALSA(node, token)) return SUCCESS;
             return FAIL;
-        case lex::RESTO_IDENT:
-            if(sin::RESTO_IDENT(token)) return SUCCESS;
+        case lex::Type::pattern::RESTO_IDENT:
+            if(RESTO_IDENT(node, token)) return SUCCESS;
             return FAIL;
-        case lex::LISTA_ARG:
-            if(sin::LISTA_ARG(token)) return SUCCESS;
+        case lex::Type::pattern::LISTA_ARG:
+            if(LISTA_ARG(node, token)) return SUCCESS;
             return FAIL;
-        case lex::ARGUMENTOS:
-            if(sin::ARGUMENTOS(token)) return SUCCESS;
+        case lex::Type::pattern::ARGUMENTOS:
+            if(ARGUMENTOS(node, token)) return SUCCESS;
             return FAIL;
-        case lex::MAIS_IDENT:
-            if(sin::MAIS_IDENT(token)) return SUCCESS;
+        case lex::Type::pattern::MAIS_IDENT:
+            if(MAIS_IDENT(node, token)) return SUCCESS;
             return FAIL;
-        case lex::EXP_IDENT:
-            if(sin::EXP_IDENT(token)) return SUCCESS;
+        case lex::Type::pattern::EXP_IDENT:
+            if(EXP_IDENT(node, token)) return SUCCESS;
             return FAIL;
-        case lex::CONDICAO:
-            if(sin::CONDICAO(token)) return SUCCESS;
+        case lex::Type::pattern::CONDICAO:
+            if(CONDICAO(node, token)) return SUCCESS;
             return FAIL;
-        case lex::RELACAO:
-            if(sin::RELACAO(token)) return SUCCESS;
+        case lex::Type::pattern::RELACAO:
+            if(RELACAO(node, token)) return SUCCESS;
             return FAIL;
-        case lex::EXPRESSAO:
-            if(sin::EXPRESSAO(token)) return SUCCESS;
+        case lex::Type::pattern::EXPRESSAO:
+            if(EXPRESSAO(node, token)) return SUCCESS;
             return FAIL;
-        case lex::TERMO:
-            if(sin::TERMO(token)) return SUCCESS;
+        case lex::Type::pattern::TERMO:
+            if(TERMO(node, token)) return SUCCESS;
             return FAIL;
-        case lex::OP_UN:
-            if(sin::OP_UN(token)) return SUCCESS;
+        case lex::Type::pattern::OP_UN:
+            if(OP_UN(node, token)) return SUCCESS;
             return FAIL;
-        case lex::FATOR:
-            if(sin::FATOR(token)) return SUCCESS;
+        case lex::Type::pattern::FATOR:
+            if(FATOR(node, token)) return SUCCESS;
             return FAIL;
-        case lex::OUTROS_TERMOS:
-            if(sin::OUTROS_TERMOS(token)) return SUCCESS;
+        case lex::Type::pattern::OUTROS_TERMOS:
+            if(OUTROS_TERMOS(node, token)) return SUCCESS;
             return FAIL;
-        case lex::OP_AD:
-            if(sin::OP_AD(token)) return SUCCESS;
+        case lex::Type::pattern::OP_AD:
+            if(OP_AD(node, token)) return SUCCESS;
             return FAIL;
-        case lex::MAIS_FATORES:
-            if(sin::MAIS_FATORES(token)) return SUCCESS;
+        case lex::Type::pattern::MAIS_FATORES:
+            if(MAIS_FATORES(node, token)) return SUCCESS;
             return FAIL;
-        case lex::OP_MUL:
-            if(sin::OP_MUL(token)) return SUCCESS;
+        case lex::Type::pattern::OP_MUL:
+            if(OP_MUL(node, token)) return SUCCESS;
             return FAIL;
         default:
             return FAIL;
     }
 }
 
-int isProductionValid(std::vector<lex::token>::iterator & token, std::vector<lex::lexema> & lexemas) {
+int isProductionValid(ast::Node* node, std::deque<lex::token>::iterator & token, std::deque<lex::token> & lexemas) {
     for(auto & lexema : lexemas) {
         if((*token).value == "$") return FAIL;
-        if(lexema.terminal) {
-            if(lexema.value == lex::IDENTIFIER_V && (*token).type == lex::IDENTIFIER_V) {
-                // std::cout << lex::IDENTIFIER_V << std::endl;
+        if(lexema.type.status()) {
+            if(lexema.type.pattern == lex::Type::pattern::IDENTIFIER && (*token).type.pattern == lex::Type::pattern::IDENTIFIER) {
+                // std::cout << lex::Type::pattern::IDENTIFIER << std::endl;
             } else if(lexema.value != (*token).value) return FAIL;
+            node->tokens.push_back(ast::Node::pointer((*token)));
             token++;
         } else {
-            if(!findNonTerminal(lexema.type, token)) return FAIL;
+            auto* novo = ast::Node::pointer(lexema.type, lexema.value);
+            node->tokens.push_back(novo);
+            if(!findNonTerminal(lexema.type.pattern, novo, token)) return FAIL;
         }
     }
     return SUCCESS;
 }
 
-int sin::parse(std::vector<lex::token>::iterator & token) {
-    return findNonTerminal(0, token);
-}
-
-int sin::PROG(std::vector<lex::token>::iterator & token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::PUBLIC, lex::PUBLIC_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::CLASS, lex::CLASS_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::IDENTIFIER, lex::IDENTIFIER_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::ABERTURA_CHAVE, lex::ABERTURA_CHAVE_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::INIT, lex::INIT_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::METODO, lex::METODO_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::FECHAMENTO_CHAVE, lex::FECHAMENTO_CHAVE_V, lex::TERMINAL);
-    if(isProductionValid(token, lexemas)) return SUCCESS;
-    return FAIL;
-}
-
-int sin::INIT(std::vector<lex::token>::iterator & token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::PUBLIC, lex::PUBLIC_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::STATIC, lex::STATIC_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::VOID, lex::VOID_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::MAIN, lex::MAIN_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::ABERTURA_PARENTESE, lex::ABERTURA_PARENTESE_V, lex::TERMINAL);
-    //lexemas.emplace_back(lex::STRING, lex::STRING_V, lex::TERMINAL);
-    //lexemas.emplace_back(lex::ABERTURA_COLCHETE, lex::ABERTURA_COLCHETE_V, lex::TERMINAL);
-    //lexemas.emplace_back(lex::FECHAMENTO_COLCHETE, lex::FECHAMENTO_COLCHETE_V,lex::TERMINAL);
-    //lexemas.emplace_back(lex::IDENTIFIER, lex::IDENTIFIER_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::FECHAMENTO_PARENTESE, lex::FECHAMENTO_PARENTESE_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::ABERTURA_CHAVE, lex::ABERTURA_CHAVE_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::DC, lex::DC_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::CMDS, lex::CMDS_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::FECHAMENTO_CHAVE, lex::FECHAMENTO_CHAVE_V, lex::TERMINAL);
-    if(isProductionValid(token, lexemas)) return SUCCESS;
-    return FAIL;
-}
-
-int sin::METODO(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::PUBLIC, lex::PUBLIC_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::STATIC, lex::STATIC_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::TIPO, lex::TIPO_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::IDENTIFIER, lex::IDENTIFIER_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::ABERTURA_PARENTESE, lex::ABERTURA_PARENTESE_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::PARAMS, lex::PARAMS_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::FECHAMENTO_PARENTESE, lex::FECHAMENTO_PARENTESE_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::ABERTURA_CHAVE, lex::ABERTURA_CHAVE_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::DC, lex::DC_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::CMDS, lex::CMDS_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::RETURN, lex::RETURN_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::EXPRESSAO, lex::EXPRESSAO_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::PONTO_VIRGULA, lex::PONTO_VIRGULA_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::FECHAMENTO_CHAVE, lex::FECHAMENTO_CHAVE_V, lex::TERMINAL);
-    if((*token).value == lex::PUBLIC_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
-        return FAIL;
-    }
-    return SUCCESS;
-}
-
-int sin::PARAMS(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::TIPO, lex::TIPO_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::IDENTIFIER, lex::IDENTIFIER_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::MAIS_PARAMS, lex::MAIS_PARAMS_V, lex::NON_TERMINAL);
-    if((*token).value == lex::DOUBLE_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
-        return FAIL;
-    }
-    return SUCCESS;
-}
-
-int sin::MAIS_PARAMS(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::VIRGULA, lex::VIRGULA_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::PARAMS, lex::PARAMS_V, lex::NON_TERMINAL);
-    if((*token).value == lex::VIRGULA_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
-        return FAIL;
-    }
-    return SUCCESS;
-}
-
-int sin::DC(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::VAR, lex::VAR_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::MAIS_DC, lex::MAIS_DC_V, lex::NON_TERMINAL);
-    if((*token).value == lex::DOUBLE_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
-        return FAIL;
-    }
-    return SUCCESS;
-}
-
-int sin::MAIS_DC(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::PONTO_VIRGULA, lex::PONTO_VIRGULA_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::DC, lex::DC_V, lex::NON_TERMINAL);
-    if((*token).value == lex::PONTO_VIRGULA_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
-        return FAIL;
-    }
-    return SUCCESS;
-}
-
-int sin::VAR(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::TIPO, lex::TIPO_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::VARS, lex::VARS_V, lex::NON_TERMINAL);
-    if(isProductionValid(token, lexemas)) return SUCCESS;
-    return FAIL;
-}
-
-int sin::VARS(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::IDENTIFIER, lex::IDENTIFIER_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::MAIS_VAR, lex::MAIS_VAR_V, lex::NON_TERMINAL);
-    if(isProductionValid(token, lexemas)) return SUCCESS;
-    return FAIL;
-}
-
-int sin::MAIS_VAR(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::VIRGULA, lex::VIRGULA_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::VARS, lex::VARS_V, lex::NON_TERMINAL);
-    if((*token).value == lex::VIRGULA_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
-        return FAIL;
-    }
-    return SUCCESS;
-}
-
-int sin::TIPO(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::DOUBLE, lex::DOUBLE_V, lex::TERMINAL);
-    if(isProductionValid(token, lexemas)) return SUCCESS;
-    return FAIL;
-}
-
-int sin::CMDS(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    if ((*token).type == lex::IDENTIFIER_V || (*token).value == lex::PRINTLN_V) {
-        lexemas.emplace_back(lex::CMD, lex::CMD_V, lex::NON_TERMINAL);
-        lexemas.emplace_back(lex::PONTO_VIRGULA, lex::PONTO_VIRGULA_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::CMDS, lex::CMDS_V, lex::NON_TERMINAL);
-    } else if((*token).value == lex::IF_V || (*token).value == lex::WHILE_V) {
-        lexemas.emplace_back(lex::CONDITIONAL_CMD, lex::CONDITIONAL_CMD_V, lex::NON_TERMINAL);
-        lexemas.emplace_back(lex::CMDS, lex::CMDS_V, lex::NON_TERMINAL);
+// Validar para lançar exceção, de modo a interromper o fluxo do programa
+ast::Node* parse(std::deque<lex::token>::iterator & token) {
+    auto* root = ast::Node::pointer(lex::Type(lex::Type::pattern::PROG));
+    bool ans = PROG(root, token);
+    if(ans) {
+        std::cout << "Parser: Tudo Certo!" <<  std::endl << std::endl;
     } else {
+        std::cout << "Parser: Tudo Errado! Fim dos Tempos!" <<  std::endl;
+    }
+    return root;
+}
+
+int PROG(ast::Node* node, std::deque<lex::token>::iterator & token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::PUBLIC));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::CLASS));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::IDENTIFIER));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::LCHAVE));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::INIT));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::METODO));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::RCHAVE));
+    if(isProductionValid(node, token, lexemas)) return SUCCESS;
+    return FAIL;
+}
+
+int INIT(ast::Node* node, std::deque<lex::token>::iterator & token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::PUBLIC));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::STATIC));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::VOID));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::MAIN));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::LPARENTESE));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::RPARENTESE));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::LCHAVE));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::DC));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::CMDS));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::RCHAVE));
+    if(isProductionValid(node, token, lexemas)) return SUCCESS;
+    return FAIL;
+}
+
+int METODO(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::PUBLIC));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::STATIC));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::TIPO));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::IDENTIFIER));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::LPARENTESE));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::PARAMS));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::RPARENTESE));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::LCHAVE));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::DC));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::CMDS));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::RETURN));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::EXPRESSAO));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::PONTO_VIRGULA));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::RCHAVE));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::PUBLIC)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
+        return FAIL;
+    }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
+    return SUCCESS;
+}
+
+int PARAMS(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::TIPO));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::IDENTIFIER));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::MAIS_PARAMS));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::DOUBLE)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
+        return FAIL;
+    }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
+    return SUCCESS;
+}
+
+int MAIS_PARAMS(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::VIRGULA));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::PARAMS));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::VIRGULA)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
+        return FAIL;
+    }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
+    return SUCCESS;
+}
+
+int DC(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::VAR));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::MAIS_DC));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::DOUBLE)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
+        return FAIL;
+    }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
+    return SUCCESS;
+}
+
+int MAIS_DC(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::PONTO_VIRGULA));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::DC));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::PONTO_VIRGULA)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
+        return FAIL;
+    }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
+    return SUCCESS;
+}
+
+int VAR(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::TIPO));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::VARS));
+    if(isProductionValid(node, token, lexemas)) return SUCCESS;
+    return FAIL;
+}
+
+int VARS(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::IDENTIFIER));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::MAIS_VAR));
+    if(isProductionValid(node, token, lexemas)) return SUCCESS;
+    return FAIL;
+}
+
+int MAIS_VAR(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::VIRGULA));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::VARS));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::VIRGULA)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
+        return FAIL;
+    }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
+    return SUCCESS;
+}
+
+int TIPO(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::DOUBLE));
+    if(isProductionValid(node, token, lexemas)) return SUCCESS;
+    return FAIL;
+}
+
+int CMDS(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    if ((*token).type.pattern == lex::Type::pattern::IDENTIFIER || (*token).value == lex::Type::asValue(lex::Type::pattern::OUTPUT)) {
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::CMD));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::PONTO_VIRGULA));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::CMDS));
+    } else if((*token).value == lex::Type::asValue(lex::Type::pattern::IF) || (*token).value == lex::Type::asValue(lex::Type::pattern::WHILE)) {
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::CONDITIONAL_CMD));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::CMDS));
+    } else {
+        node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
         return SUCCESS;
     }
-    if(isProductionValid(token, lexemas)) return SUCCESS;
+    if(isProductionValid(node, token, lexemas)) return SUCCESS;
     return FAIL;
 }
 
-int sin::CONDITIONAL_CMD(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    if((*token).value == lex::IF_V) {
-        lexemas.emplace_back(lex::IF, lex::IF_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::ABERTURA_PARENTESE, lex::ABERTURA_PARENTESE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::CONDICAO, lex::CONDICAO_V, lex::NON_TERMINAL);
-        lexemas.emplace_back(lex::FECHAMENTO_PARENTESE, lex::FECHAMENTO_PARENTESE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::ABERTURA_CHAVE, lex::ABERTURA_CHAVE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::CMDS, lex::CMDS_V, lex::NON_TERMINAL);
-        lexemas.emplace_back(lex::FECHAMENTO_CHAVE, lex::FECHAMENTO_CHAVE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::PFALSA, lex::PFALSA_V, lex::NON_TERMINAL);
-    } else if((*token).value == lex::WHILE_V) {
-        lexemas.emplace_back(lex::WHILE, lex::WHILE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::ABERTURA_PARENTESE, lex::ABERTURA_PARENTESE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::CONDICAO, lex::CONDICAO_V, lex::NON_TERMINAL);
-        lexemas.emplace_back(lex::FECHAMENTO_PARENTESE, lex::FECHAMENTO_PARENTESE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::ABERTURA_CHAVE, lex::ABERTURA_CHAVE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::CMDS, lex::CMDS_V, lex::NON_TERMINAL);
-        lexemas.emplace_back(lex::FECHAMENTO_CHAVE, lex::FECHAMENTO_CHAVE_V, lex::TERMINAL);
+int CONDITIONAL_CMD(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::IF)) {
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::IF));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::LPARENTESE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::CONDICAO));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::RPARENTESE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::LCHAVE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::CMDS));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::RCHAVE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::PFALSA));
+    } else if((*token).value == lex::Type::asValue(lex::Type::pattern::WHILE)) {
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::WHILE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::LPARENTESE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::CONDICAO));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::RPARENTESE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::LCHAVE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::CMDS));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::RCHAVE));
     } else {
         return FAIL;
     }
-    if(isProductionValid(token, lexemas)) return SUCCESS;
+    if(isProductionValid(node, token, lexemas)) return SUCCESS;
     return FAIL;
 }
 
-int sin::CMD(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    if((*token).value == lex::PRINTLN_V) {
-        lexemas.emplace_back(lex::PRINTLN, lex::PRINTLN_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::ABERTURA_PARENTESE, lex::ABERTURA_PARENTESE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::EXPRESSAO, lex::EXPRESSAO_V, lex::NON_TERMINAL);
-        lexemas.emplace_back(lex::FECHAMENTO_PARENTESE, lex::FECHAMENTO_PARENTESE_V, lex::TERMINAL);
-    } else if((*token).type == lex::IDENTIFIER_V) {
-        lexemas.emplace_back(lex::IDENTIFIER, lex::IDENTIFIER_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::RESTO_IDENT, lex::RESTO_IDENT_V, lex::NON_TERMINAL);
+int CMD(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::OUTPUT)) {
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::OUTPUT));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::LPARENTESE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::EXPRESSAO));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::RPARENTESE));
+    } else if((*token).type.pattern == lex::Type::pattern::IDENTIFIER) {
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::IDENTIFIER));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::RESTO_IDENT));
     } else {
         return FAIL;
     }
-    if(isProductionValid(token, lexemas)) return SUCCESS;
+    if(isProductionValid(node, token, lexemas)) return SUCCESS;
     return FAIL;
 }
 
-int sin::PFALSA(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::ELSE, lex::ELSE_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::ABERTURA_CHAVE, lex::ABERTURA_CHAVE_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::CMDS, lex::CMDS_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::FECHAMENTO_CHAVE, lex::FECHAMENTO_CHAVE_V, lex::TERMINAL);
-    if((*token).value == lex::ELSE_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int PFALSA(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::ELSE));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::LCHAVE));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::CMDS));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::RCHAVE));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::ELSE)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
         return FAIL;
     }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
     return SUCCESS;
 }
 
 
-int sin::RESTO_IDENT(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    if((*token).value == lex::ATRIBUICAO_V) {
-        lexemas.emplace_back(lex::ATRIBUICAO, lex::ATRIBUICAO_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::EXP_IDENT, lex::EXP_IDENT_V, lex::NON_TERMINAL);
-    } else if((*token).value == lex::ABERTURA_PARENTESE_V) {
-        lexemas.emplace_back(lex::ABERTURA_PARENTESE, lex::ABERTURA_PARENTESE_V, lex::TERMINAL);
-        lexemas.emplace_back(lex::LISTA_ARG, lex::LISTA_ARG_V, lex::NON_TERMINAL);
-        lexemas.emplace_back(lex::FECHAMENTO_PARENTESE, lex::FECHAMENTO_PARENTESE_V, lex::TERMINAL);
+int RESTO_IDENT(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::ATRIBUICAO)) {
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::ATRIBUICAO));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::EXP_IDENT));
+    } else if((*token).value == lex::Type::asValue(lex::Type::pattern::LPARENTESE)) {
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::LPARENTESE));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::LISTA_ARG));
+        lexemas.emplace_back(lex::Type(lex::Type::pattern::RPARENTESE));
     } else {
         return FAIL;
     }
-    if(isProductionValid(token, lexemas)) return SUCCESS;
+    if(isProductionValid(node, token, lexemas)) return SUCCESS;
     return FAIL;
 }
 
-int sin::LISTA_ARG(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::ARGUMENTOS, lex::ARGUMENTOS_V, lex::NON_TERMINAL);
-    if((*token).type == lex::IDENTIFIER_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int LISTA_ARG(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::ARGUMENTOS));
+    if((*token).type.pattern == lex::Type::pattern::IDENTIFIER) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
         return FAIL;
     }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
     return SUCCESS;
 }
 
-int sin::ARGUMENTOS(std::vector<lex::token>::iterator & token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::IDENTIFIER, lex::IDENTIFIER_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::MAIS_IDENT, lex::MAIS_IDENT_V, lex::NON_TERMINAL);
-    if((*token).type == lex::IDENTIFIER_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int ARGUMENTOS(ast::Node* node, std::deque<lex::token>::iterator & token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::IDENTIFIER));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::MAIS_IDENT));
+    if((*token).type == lex::Type(lex::Type::pattern::IDENTIFIER)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
     }
     return FAIL;
 }
 
-int sin::MAIS_IDENT(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::VIRGULA, lex::VIRGULA_V, lex::TERMINAL);
-    lexemas.emplace_back(lex::ARGUMENTOS, lex::ARGUMENTOS_V, lex::NON_TERMINAL);
-    if((*token).value == lex::VIRGULA_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int MAIS_IDENT(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::VIRGULA));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::ARGUMENTOS));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::VIRGULA)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
         return FAIL;
     }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
     return SUCCESS;
 }
 
-int sin::EXP_IDENT(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::EXPRESSAO, lex::EXPRESSAO_V, lex::NON_TERMINAL);
-    if( (*token).type == lex::IDENTIFIER_V ||
-        (*token).type == lex::NUM_V ||
-        (*token).value == lex::ABERTURA_PARENTESE_V ||
-        (*token).value == lex::SUBTRACAO_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int EXP_IDENT(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::EXPRESSAO));
+    if( (*token).type == lex::Type(lex::Type::pattern::IDENTIFIER) ||
+        (*token).type == lex::Type(lex::Type::pattern::NUM) ||
+        (*token).value == lex::Type::asValue(lex::Type::pattern::LPARENTESE) ||
+        (*token).value == lex::Type::asValue(lex::Type::pattern::SUBTRACAO)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
         return FAIL;
-    } else if((*token).value == lex::LER_DOUBLE_V) {
+    } else if((*token).value == lex::Type::asValue(lex::Type::pattern::INPUT)) {
+        node->tokens.push_back(ast::Node::pointer((*token)));
+        node->tokens.push_back(ast::Node::pointer((*token)));
         token++;
         return SUCCESS;
     }
     return FAIL;
 }
 
-int sin::CONDICAO(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::EXPRESSAO, lex::EXPRESSAO_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::RELACAO, lex::RELACAO_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::EXPRESSAO, lex::EXPRESSAO_V, lex::NON_TERMINAL);
-    if ((*token).type == lex::IDENTIFIER_V ||
-        (*token).type == lex::NUM_V ||
-        (*token).value == lex::ABERTURA_PARENTESE_V ||
-        (*token).value == lex::SUBTRACAO_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int CONDICAO(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::EXPRESSAO));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::RELACAO));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::EXPRESSAO));
+    if ((*token).type == lex::Type(lex::Type::pattern::IDENTIFIER) ||
+        (*token).type == lex::Type(lex::Type::pattern::NUM) ||
+        (*token).value == lex::Type::asValue(lex::Type::pattern::LPARENTESE) ||
+        (*token).value == lex::Type::asValue(lex::Type::pattern::SUBTRACAO)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
         return FAIL;
     }
     return FAIL;
 }
 
-int sin::RELACAO(std::vector<lex::token>::iterator &token) {
-    if((*token).type == "Operator") {
+bool isOperator(std::string s) {
+    return s == "<=" || s == ">=" || s == "==" || s == "!=" || s == "<" || s== ">";
+}
+
+
+int RELACAO(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    if(isOperator((*token).value) /*(*token).type == lex::Type(lex::Type::pattern::OPERATOR)*/) {
+        node->tokens.push_back(ast::Node::pointer((*token)));
         token++;
         return SUCCESS;
     }
     return FAIL;
 }
 
-int sin::EXPRESSAO(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::TERMO, lex::TERMO_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::OUTROS_TERMOS, lex::OUTROS_TERMOS_V, lex::NON_TERMINAL);
-    if ((*token).type == lex::IDENTIFIER_V ||
-        (*token).type == lex::NUM_V ||
-        (*token).value == lex::ABERTURA_PARENTESE_V ||
-        (*token).value == lex::SUBTRACAO_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int EXPRESSAO(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::TERMO));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::OUTROS_TERMOS));
+    if ((*token).type == lex::Type(lex::Type::pattern::IDENTIFIER) ||
+        (*token).type == lex::Type(lex::Type::pattern::NUM) ||
+        (*token).value == lex::Type::asValue(lex::Type::pattern::LPARENTESE) ||
+        (*token).value == lex::Type::asValue(lex::Type::pattern::SUBTRACAO)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
         return FAIL;
     }
     return FAIL;
 }
 
-int sin::TERMO(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::OP_UN, lex::OP_UN_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::FATOR, lex::FATOR_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::MAIS_FATORES, lex::MAIS_FATORES_V, lex::NON_TERMINAL);
-    if( (*token).type == lex::IDENTIFIER_V ||
-        (*token).type == lex::NUM_V ||
-        (*token).value == lex::ABERTURA_PARENTESE_V ||
-        (*token).value == lex::SUBTRACAO_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int TERMO(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::OP_UN));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::FATOR));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::MAIS_FATORES));
+    if( (*token).type == lex::Type(lex::Type::pattern::IDENTIFIER) ||
+        (*token).type == lex::Type(lex::Type::pattern::NUM) ||
+        (*token).value == lex::Type::asValue(lex::Type::pattern::LPARENTESE) ||
+        (*token).value == lex::Type::asValue(lex::Type::pattern::SUBTRACAO)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
         return FAIL;
     }
     return FAIL;
 }
 
-int sin::OP_UN(std::vector<lex::token>::iterator &token) {
-    if((*token).value == lex::NEGACAO_V) token++;
+int OP_UN(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::SUBTRACAO)) {
+        node->tokens.push_back(ast::Node::pointer((*token)));
+        token++;
+    }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
     return SUCCESS;
 }
 
-int sin::FATOR(std::vector<lex::token>::iterator &token) {
-    if((*token).type == lex::IDENTIFIER_V || (*token).type == lex::NUM_V) {
+int FATOR(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    if((*token).type == lex::Type(lex::Type::pattern::IDENTIFIER) || (*token).type == lex::Type(lex::Type::pattern::NUM)) {
+        node->tokens.push_back(ast::Node::pointer((*token)));
         token++;
         return SUCCESS;
     }
     return FAIL;
 }
 
-int sin::OUTROS_TERMOS(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::OP_AD, lex::OP_AD_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::TERMO, lex::TERMO_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::OUTROS_TERMOS, lex::OUTROS_TERMOS_V, lex::NON_TERMINAL);
-    if((*token).value == lex::ADICAO_V || (*token).value == lex::SUBTRACAO_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int OUTROS_TERMOS(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::OP_AD));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::TERMO));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::OUTROS_TERMOS));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::ADICAO) || (*token).value == lex::Type::asValue(lex::Type::pattern::SUBTRACAO)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
         return FAIL;
     }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
     return SUCCESS;
 }
 
-int sin::OP_AD(std::vector<lex::token>::iterator &token) {
-    if((*token).value == lex::ADICAO_V || (*token).value == lex::SUBTRACAO_V) {
+int OP_AD(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::ADICAO) || (*token).value == lex::Type::asValue(lex::Type::pattern::SUBTRACAO)) {
+        node->tokens.push_back(ast::Node::pointer((*token)));
         token++;
         return SUCCESS;
     }
     return FAIL;
 }
 
-int sin::MAIS_FATORES(std::vector<lex::token>::iterator &token) {
-    std::vector<lex::lexema> lexemas;
-    lexemas.emplace_back(lex::OP_MUL, lex::OP_MUL_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::FATOR, lex::FATOR_V, lex::NON_TERMINAL);
-    lexemas.emplace_back(lex::MAIS_FATORES, lex::MAIS_FATORES_V, lex::NON_TERMINAL);
-    if((*token).value == lex::MULTIPLICACAO_V || (*token).value == lex::DIVISAO_V) {
-        if(isProductionValid(token, lexemas)) return SUCCESS;
+int MAIS_FATORES(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    std::deque<lex::token> lexemas; 
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::OP_MUL));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::FATOR));
+    lexemas.emplace_back(lex::Type(lex::Type::pattern::MAIS_FATORES));
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::MULTIPLICACAO) || (*token).value == lex::Type::asValue(lex::Type::pattern::DIVISAO)) {
+        if(isProductionValid(node, token, lexemas)) return SUCCESS;
         return FAIL;
     }
+    node->tokens.push_back(ast::Node::pointer(lex::Type{lex::Type::pattern::VAZIO}));
     return SUCCESS;
 }
 
-int sin::OP_MUL(std::vector<lex::token>::iterator &token) {
-    if((*token).value == lex::MULTIPLICACAO_V || (*token).value == lex::DIVISAO_V) {
+int OP_MUL(ast::Node* node, std::deque<lex::token>::iterator &token) {
+    if((*token).value == lex::Type::asValue(lex::Type::pattern::MULTIPLICACAO) || (*token).value == lex::Type::asValue(lex::Type::pattern::DIVISAO)) {
+        node->tokens.push_back(ast::Node::pointer((*token)));
         token++;
         return SUCCESS;
     }

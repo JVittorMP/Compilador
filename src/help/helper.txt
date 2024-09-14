@@ -1,8 +1,0 @@
-Compilar Novo Arquivo Lex.yy.c
-    > lex <lexer.l>
-
-Gerar Arquivo TXT com Tokens
-    > Alterar <lexer.l> para Escrever em <tokens.txt> ao Identificar um Lexema
-    > Alterar o Método lex::scan em <lexer.cpp> para atribuir um novo arquivo
-      de Saída no Modo de Escrita na Variável 'yyout'
-    > Recompilar o Arquivo <lexer.l> e Gerar novo Arquivo <lex.yy.c>
