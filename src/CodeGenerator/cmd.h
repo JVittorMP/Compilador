@@ -103,7 +103,7 @@ namespace cmd {
             dsv.emplace_back(cmd);
         }
 
-        explicit Code(const std::string& file_name): file(file_name) {
+        explicit Code(const std::string & file_name): file(file_name) {
             if(!file) std::cout << "Error in creating file!!!";
             else std::cout << "Success in creating file!!!";
         };

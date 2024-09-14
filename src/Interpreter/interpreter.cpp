@@ -160,7 +160,7 @@ int main() {
     std::stack<double> pDados;
     sem::scopeController scope;
 
-    std::ifstream code("../Documentos/code/code.txt");
+    std::ifstream code("../Documentos/code/code02.txt");
     std::string line;
     unsigned init = 0, l = 1;
 

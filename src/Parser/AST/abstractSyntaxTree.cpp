@@ -89,6 +89,7 @@ std::deque<ast::Node*> getExpression(std::deque<ast::Node*> v, ast::Node* & cur)
     return v;
 }
 
+// Sem Uso
 void turnExp(ast::Node* & cur) {
     cur->type = "EXPRESSION";
     cur->value = "EXPRESSION";

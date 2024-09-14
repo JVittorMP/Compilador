@@ -1,5 +1,5 @@
 public class Input02 {
     public static void main() {
-        System.out.println(1 * 3);
+        System.out.println(2 * 3);
     }
 }

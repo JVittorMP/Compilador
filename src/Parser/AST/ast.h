@@ -1,6 +1,8 @@
 #ifndef COMPILADORES_AST_H
 #define COMPILADORES_AST_H
 
+#include <utility>
+
 #include "../../basic.h"
 #include "../../Lexer/lex.h"
 
@@ -11,7 +13,7 @@ namespace ast {
         std::string type;
         std::string value;
         bool terminal = true;
-        std::deque<Node *> tokens;
+        std::deque<Node*> tokens;
 
         Node() = default;
 
@@ -20,6 +22,34 @@ namespace ast {
 
         bool operator==(const Node* & node) const {
             return std::tie(this->type, this->value, this->terminal) == std::tie(node->type, node->value, node->terminal);
+        }
+    };
+
+    class Node02 {
+    public:
+        lex::Type type;
+        std::string value;
+        unsigned line = 0;
+        std::deque<Node02*> tokens;
+
+        Node02() = default;
+        explicit Node02(lex::Type type):
+            type(type), value(type.asValue()) {}
+        Node02(lex::Type type, std::string value):
+            type(type), value(std::move(value)) {}
+        explicit Node02(lex::token02 t):
+            type(t.type), value(t.value), line(t.linha) {}
+
+        static Node02* pointer(lex::Type type, std::string value) {
+            return new Node02(type, std::move(value));
+        }
+
+        static Node02* pointer(lex::Type type) {
+            return new Node02(type);
+        }
+
+        static Node02* pointer(lex::token02 t) {
+            return new Node02(std::move(t));
         }
     };
 

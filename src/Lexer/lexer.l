@@ -19,7 +19,7 @@ João Vittor de Moura Padilha - 202111310018
 
 Keyword        (\double|int|boolean|class|extends|public|static|void|main|String|System.out.println|length|true|false|this|new|null|while|if|else|return)
 Identifier     [a-zA-Z][a-zA-Z0-9_]*
-Num            [0-9]+
+Num            ([0-9]+|[0-9]*\.[0-9]+)
 Operator       <=|>=|==|!=|&&|"||"|[-+*=/\<>!]
 Punctuation    [(\)|\(|\}|\{|\]|\[|\;|\.|\,)]
 Whitespace     [ \t\r\f]+
