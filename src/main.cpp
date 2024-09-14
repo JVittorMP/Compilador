@@ -1,6 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <string>
+#include "basic.h"
 
 #include "Lexer/lex.h"
 #include "Parser/AST/ast.h"
@@ -12,27 +10,13 @@
 
 int main() {
     //const std::string inputFile = "../Documentos/mini-java-exemplo.java";
-    const std::string inputFile = "../Documentos/input/input-03.txt";
+    const std::string inputFile = "../Documentos/input/input-04.txt";
 
     std::deque<lex::token> tokens = lex::scan(inputFile);
 
     for(auto & [k, v, l] : tokens) {
         std::cout << l << ": [" << k.asString() << ", " << v << "]" << std::endl;
     }
-
-    // std::deque<lex::token> tokens02;
-    // for(const auto& tk : tokens) {
-    //     lex::Type t;
-    //     if( tk.type == "Identifier" || tk.type == "Num" ||
-    //         tk.type == "Keyword" || tk.type == "Punctuation" || tk.type == "Operator") {
-    //         t = lex::Type(tk.type);
-    //     } else {
-    //         t = lex::Type(tk.value);
-    //     }
-    //
-    //     tokens02.emplace_back(t, tk.value, tk.linha);
-    //     auto tm = tokens02.back();
-    // }
 
     auto it = tokens.begin();
     ast::Node* root = parse(it);

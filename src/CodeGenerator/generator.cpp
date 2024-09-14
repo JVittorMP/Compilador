@@ -58,10 +58,14 @@ void getCondition(ast::Node* node, sem::scopeController & scope, cmd::Code & cod
     code.initializeJump(dsvf);
 }
 
-// → LEIT : Lê um dado de entrada para o topo da pilha
-// → ELIN : Indica Inicio de ELSE
-// → ELND : Indica Fim de ELSE
-// → DSVX : Indica Fim de IF/WHILE
+/*
+
+ → LEIT : Lê um dado de entrada para o topo da pilha
+ → ELIN : Indica Inicio de ELSE
+ → ELND : Indica Fim de ELSE
+ → DSVX : Indica Fim de IF/WHILE
+
+ */
 void generateCommands(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     for(auto nd : node->tokens) {
         auto cur = nd->tokens[0];
@@ -120,10 +124,7 @@ void generateCommands(ast::Node* node, sem::scopeController & scope, cmd::Code &
                 auto* param = new cmd::Cmd("PARM", {id->value});
                 code.saveCommand(param);
             });
-//            for(const auto id : nd->tokens[1]->tokens) {
-//                auto* param = new cmd::Cmd("PARM", {id->value});
-//                code.saveCommand(param);
-//            }
+
             auto* chpr = new cmd::Cmd("CHPR", {"1"});
             code.saveCommand(chpr);
             code.endJump();
@@ -221,15 +222,6 @@ bool generate(const ast::Node* root) {
     }
     generateMain(root->tokens[1], scope, code);
     code.generateCode();
-
-    // for(auto nd : root->tokens) {
-    //     if(nd->type == "INIT") {
-    //         generateMain(nd, scope, code);
-    //         code.saveCommand(cmd::Cmd("PARA"));
-    //     } else if(nd->type == "METODO") {
-    //         generateMethod(nd, scope, code);
-    //     }
-    // }
 
     return true;
 }

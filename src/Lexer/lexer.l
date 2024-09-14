@@ -29,11 +29,11 @@ Input          (lerDouble\(\))
 %%
 
 {Keyword}		    { tokens.push_back({lex::Type("Keyword"), yytext, line}); }
-{Input}             { tokens.push_back({"lex::Type(Input"), yytext, line}); }
-{Identifier}		{ tokens.push_back({"lex::Type(Identifier"), yytext, line}); }
-{Num}			    { tokens.push_back({"lex::Type(Num"), yytext, line}); }
-{Operator}		    { tokens.push_back({"lex::Type(Operator"), yytext, line}); }
-{Punctuation}		{ tokens.push_back({"lex::Type(Punctuation"), yytext, line}); }
+{Input}             { tokens.push_back({lex::Type("Input"), yytext, line}); }
+{Identifier}		{ tokens.push_back({lex::Type("Identifier"), yytext, line}); }
+{Num}			    { tokens.push_back({lex::Type("Num"), yytext, line}); }
+{Operator}		    { tokens.push_back({lex::Type("Operator"), yytext, line}); }
+{Punctuation}		{ tokens.push_back({lex::Type("Punctuation"), yytext, line}); }
 {Whitespace}		{ /* Whitespace Ignored */ }
 \n                  { line++;}
 <<EOF>>             { tokens.push_back({lex::Type("End"), "$", line}); return 0;}

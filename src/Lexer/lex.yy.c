@@ -549,7 +549,7 @@ João Vittor de Moura Padilha - 202111310018
     #include "lex.h"
 
     #undef YY_DECL
-    #define YY_DECL int scan(std::vector<lex::token> & tokens)
+    #define YY_DECL int scan(std::deque<lex::token> & tokens)
 
     unsigned line = 1;
 #line 556 "lex.yy.c"
@@ -834,32 +834,32 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 31 "lexer.l"
-{ tokens.push_back({"Keyword", yytext, line}); }
+{ tokens.push_back({lex::Type("Keyword"), yytext, line}); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
 #line 32 "lexer.l"
-{ tokens.push_back({"Input", yytext, line}); }
+{ tokens.push_back({lex::Type("Input"), yytext, line}); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
 #line 33 "lexer.l"
-{ tokens.push_back({"Identifier", yytext, line}); }
+{ tokens.push_back({lex::Type("Identifier"), yytext, line}); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
 #line 34 "lexer.l"
-{ tokens.push_back({"Num", yytext, line}); }
+{ tokens.push_back({lex::Type("Num"), yytext, line}); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
 #line 35 "lexer.l"
-{ tokens.push_back({"Operator", yytext, line}); }
+{ tokens.push_back({lex::Type("Operator"), yytext, line}); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
 #line 36 "lexer.l"
-{ tokens.push_back({"Punctuation", yytext, line}); }
+{ tokens.push_back({lex::Type("Punctuation"), yytext, line}); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
@@ -874,7 +874,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 #line 39 "lexer.l"
-{ tokens.push_back({"End", "$", line}); return 0;}
+{ tokens.push_back({lex::Type("End"), "$", line}); return 0;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
