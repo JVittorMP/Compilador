@@ -17,6 +17,10 @@ namespace sin {
         lex::token token() {
             return tokens[i];
         }
+
+        lex::token previous() {
+            return tokens[i - 1];
+        }
         
         void next() {
             i++;

@@ -3,6 +3,7 @@ project(Compilador)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(Compilador src/main.cpp)
+add_executable(Compilador src/main.cpp
+        src/Exceptions/compiler.h)
 add_executable(Interpretador src/Interpreter/interpreter.cpp
         src/Interpreter/interpreter.h)

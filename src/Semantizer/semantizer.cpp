@@ -5,8 +5,8 @@ bool avaluateExpressionIdentifierContext(const ast::Node* node, sem::scopeContro
     for(const auto nd : node->tokens) {
         if(nd->type.pattern == lex::Type::pattern::IDENTIFIER) {
             if(!scope.isValid(nd->value)) {
-                std::cout << "Variavel [" + nd->value + "] nao declarada!" << std::endl;
-                return false;
+                const std::string msg = "On Line " + std::to_string(nd->line) + ": Variavel [" + nd->value + "] Ausente!";
+                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
             }
         }
         avaluateExpressionIdentifierContext(nd, scope);
@@ -21,8 +21,8 @@ bool avaluateCommands(ast::Node* node, sem::scopeController & scope) {
             if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
         } else if(cur->value == "=") {
             if(!scope.isValid(cur->tokens[0]->value)) {
-                std::cout << "Variavel [" + cur->tokens[0]->value + "] nao declarada!" << std::endl;
-                return false;
+                const std::string msg =  "On Line " + std::to_string(cur->tokens[0]->line) + ": Variavel [" + cur->tokens[0]->value + "] Ausente!";
+                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
             }
             if(cur->tokens[1]->type.pattern == lex::Type::pattern::INPUT) continue;
             if(!avaluateExpressionIdentifierContext(cur->tokens[1], scope)) return false;
@@ -30,18 +30,18 @@ bool avaluateCommands(ast::Node* node, sem::scopeController & scope) {
             if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
             avaluateCommands(nd->tokens[2], scope);
             if(nd->tokens.size() > 3) avaluateCommands(nd->tokens[3]->tokens[1], scope); // Avalia Else
-        } else if(cur->type.pattern == lex::Type::pattern::INPUT) {
+        } else if(cur->type.pattern == lex::Type::pattern::IDENTIFIER) {
             std::string methodId = cur->value;
             if(!scope.isValidMethod(methodId)) {
-                std::cout << "Metodo [" + methodId + "] inexistente!" << std::endl;
-                return false;
+                const std::string msg = "Metodo [" + methodId + "] Inexistente!";
+                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
             }
             unsigned args = nd->tokens[1]->tokens.size();
             unsigned params = scope.getMethodParamsSize(methodId);
             if(args != params) {
-                std::cout << "Quantidade de argumentos passados ao metodo [" + methodId + "] incompativel!" << std::endl;
-                std::cout << "Esperado [" << args << "] argumentos, [" << params << "] parametros recebidos!" << std::endl;
-                return false;
+                const std::string msgPt1 = "Quantidade de argumentos passados ao metodo [" + methodId + "] incompativel!";
+                const std::string msgPt2 = "\n\tEsperado [" + std::to_string(args) + "] argumentos, [" + std::to_string(params) + "] parametros recebidos!";
+                throw compiler::Exception(compiler::exception::SEMANTIC, msgPt1 + msgPt2);
             }
             if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
         }
@@ -53,8 +53,8 @@ bool computeDeclarations(const ast::Node* node, sem::scopeController & scope) {
     for(const auto nd : node->tokens) {
         for(const auto id : nd->tokens[1]->tokens) {
             if(!scope.declare(id->value)) {
-                std::cout << "Declaracao redundante do identificador [" << id->value << "]" << std::endl;
-                return false;
+                const std::string msg = "On Line " + std::to_string(id->line) + ": Declaracao redundante do identificador [" + id->value + "]";
+                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
             }
         }
     }
@@ -70,8 +70,8 @@ bool computeParams(ast::Node* node, sem::scopeController & scope) {
                  * Essa linha é improvável de acontecer, haja vista que contabilizamos um novo escopo e os
                  * parâmetros da função são as primeiras declarações do novo escopo
                  */
-                std::cout << "Declaracao redundante do identificador [" << nd->tokens[1]->value << "]" << std::endl;
-                return false;
+                const std::string msg = "On Line " + std::to_string(nd->tokens[1]->line) + ": Declaracao redundante do identificador [" + nd->tokens[1]->value + "]";
+                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
             }
         }
         computeParams(nd, scope);

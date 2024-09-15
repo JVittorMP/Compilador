@@ -37,7 +37,7 @@ Input          (lerDouble\(\))
 {Whitespace}		{ /* Whitespace Ignored */ }
 \n                  { line++;}
 <<EOF>>             { tokens.push_back({lex::Type("End"), "$", line}); return 0;}
-.			        { printf("[Invalid Input (Lexical Error) on Line %d, %s]\n", line, yytext);}
+.			        { tokens.push_back({lex::Type("ERROR"), "Invalid Input on Line: " + std::to_string(line) + " " + yytext, line}); } { printf("[Invalid Input (Lexical Error) on Line %d, %s]\n", line, yytext);}
 
 %%
  

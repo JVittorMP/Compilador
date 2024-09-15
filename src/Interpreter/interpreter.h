@@ -2,7 +2,7 @@
 #define INTERPRETER_H
 
 #include "../basic.h"
-#include "../CodeGenerator/cmd.h"
+#include "../Generator/cmd.h"
 #include "../Semantizer/sem.h"
 
 namespace gen {

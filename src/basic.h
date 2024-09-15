@@ -17,4 +17,6 @@
 #include <algorithm>
 #include <fstream>
 
+#include "Exceptions/compiler.h"
+
 #endif

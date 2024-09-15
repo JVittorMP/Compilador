@@ -6,6 +6,11 @@ namespace lex {
         yyin = fopen(input.data(), "r");
         std::deque<lex::token> tokens;
         ::scan(tokens);
+        for(const auto& tk : tokens) {
+            if(tk.type.pattern == Type::pattern::ERROR) {
+                throw compiler::Exception(compiler::exception::LEXICAL, tk.value);
+            }
+        }
         return tokens;
     }
 }

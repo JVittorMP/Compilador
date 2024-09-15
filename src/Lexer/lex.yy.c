@@ -879,7 +879,8 @@ case YY_STATE_EOF(INITIAL):
 case 9:
 YY_RULE_SETUP
 #line 40 "lexer.l"
-{ printf("[Invalid Input (Lexical Error) on Line %d, %s]\n", line, yytext);}
+{ tokens.push_back({lex::Type("ERROR"), "Invalid Input on Line " + std::to_string(line) + ": " + yytext, line}); }
+//{ printf("[Invalid Input (Lexical Error) on Line %d, %s]\n", line, yytext);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP

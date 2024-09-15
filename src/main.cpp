@@ -2,15 +2,15 @@
 #include "Parser/parser.cpp"
 #include "Parser/AST/ast.cpp"
 #include "Semantizer/semantizer.cpp"
-#include "CodeGenerator/generator.cpp"
+#include "Generator/generator.cpp"
 
 int main() {
     //const std::string inputFile = "../Documentos/mini-java-exemplo.java";
-    const std::string inputFile = "../Documentos/input/input-05.txt";
+    const std::string inputFile = "../Documentos/input/input-03.txt";
 
     const std::deque<lex::token> tokens = lex::scan(inputFile);
     sin::cursor cursor(tokens);
-    ast::Node* root = sin::parse(cursor);
+    ast::Node* root = parse(cursor);
     ast::Node* ast = buildAST(root);
 
     if(analyse(ast)) {

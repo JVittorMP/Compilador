@@ -2,7 +2,7 @@
 
 #include "../basic.h"
 
-#include "../CodeGenerator/cmd.h"
+#include "../Generator/cmd.h"
 #include "../Semantizer/sem.h"
 
 void interpret(gen::Interpreter interpreter) {
@@ -108,6 +108,7 @@ void interpret(gen::Interpreter interpreter) {
             case cmd::command::DIVI: {
                 const double s = interpreter.popStack();
                 const double f = interpreter.popStack();
+                if(s == 0) throw compiler::Exception(compiler::exception::RUNTIME, "Division by 0");
                 interpreter.dados.push(f / s);
                 break;
             }
@@ -135,8 +136,8 @@ void interpret(gen::Interpreter interpreter) {
                 interpreter.dados.push(std::stod(cmd.args[0]));
                 break;
             case cmd::command::ERRO:
-                std::cout << "Erro no Comando [" << i << "]: " << cmd << std::endl;
-                break;
+                const std::string msg = "Erro no Comando [" + std::to_string(i) + "]: " + cmd.toString();
+                throw compiler::Exception(compiler::exception::RUNTIME, msg);
         }
         if(jump) jump = false;
         else i++;
@@ -144,6 +145,6 @@ void interpret(gen::Interpreter interpreter) {
 }
 
 int main() {
-    gen::Interpreter interpreter("../Documentos/code/code.txt");
+    const gen::Interpreter interpreter("../Documentos/code/code.txt");
     interpret(interpreter);
 }
