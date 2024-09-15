@@ -2,9 +2,8 @@
 #define COMPILADORES_LEX_H
 
 namespace lex {
-
-    const bool TERMINAL = true;
-    const bool NON_TERMINAL = false;
+    constexpr bool TERMINAL = true;
+    constexpr bool NON_TERMINAL = false;
 
     class Type {
     public:
@@ -420,19 +419,19 @@ namespace lex {
             return asValue(this->pattern);
         }
 
-        static std::string asString(enum pattern p) {
+        static std::string asString(const enum pattern p) {
             return enumName(p);
         }
 
-        static std::string asValue(enum pattern p) {
+        static std::string asValue(const enum pattern p) {
             return enumToString(p);
         }
 
-        static bool status(enum pattern p) {
+        static bool status(const enum pattern p) {
             return enumToBool(p);
         }
 
-        static Type factory(enum Type::pattern p) {
+        static Type factory(const enum pattern p) {
             return Type(p);
         }
 
@@ -448,13 +447,20 @@ namespace lex {
         unsigned linha = 0;
 
         token() = default;
-        explicit token(lex::Type t): type(t), value(t.asValue()), linha(0) {}
-        token(lex::Type t, std::string value, unsigned linha): type(t), value(std::move(value)), linha(linha) {}
+        explicit token(Type t): type(t), value(t.asValue()) {}
+        token(const Type t, std::string value, unsigned linha): type(t), value(std::move(value)), linha(linha) {}
 
         bool operator==(const token & token) const {
             return std::tie(this->type, this->value) == std::tie(token.type, token.value);
         }
     };
+
+    inline void showTokens(std::vector<token> tokens) {
+        for(auto & [k, v, l] : tokens) {
+            std::cout << l << ": [" << k.asString() << ", " << v << "]" << std::endl;
+        }
+    }
+
 }
 
 #endif

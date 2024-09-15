@@ -1,28 +1,24 @@
-#include "basic.h"
-
-#include "Lexer/lex.h"
-#include "Parser/AST/ast.h"
-
 #include "Lexer/lexer.cpp"
 #include "Parser/parser.cpp"
 #include "Parser/AST/ast.cpp"
+#include "Semantizer/semantizer.cpp"
 #include "CodeGenerator/generator.cpp"
 
 int main() {
     //const std::string inputFile = "../Documentos/mini-java-exemplo.java";
-    const std::string inputFile = "../Documentos/input/input-04.txt";
+    const std::string inputFile = "../Documentos/input/input-05.txt";
 
-    std::deque<lex::token> tokens = lex::scan(inputFile);
+    const std::deque<lex::token> tokens = lex::scan(inputFile);
+    sin::cursor cursor(tokens);
+    ast::Node* root = sin::parse(cursor);
+    ast::Node* ast = buildAST(root);
 
-    for(auto & [k, v, l] : tokens) {
-        std::cout << l << ": [" << k.asString() << ", " << v << "]" << std::endl;
+    if(analyse(ast)) {
+        std::cout << "Semantic Analysis: Tudo certo!" << std::endl;
+    } else {
+        std::cout << "Semantic Analysis: Falha no analisador semantico!" << std::endl;
     }
 
-    auto it = tokens.begin();
-    ast::Node* root = parse(it);
-    ast::Node* ast = buildAST(root);
-    explore02(ast);
-    std::cout << std::endl;
     generate(ast);
 
     return 0;

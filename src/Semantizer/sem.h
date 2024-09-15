@@ -10,16 +10,6 @@ namespace sem {
         std::vector<std::pair<std::string, std::unordered_map<std::string, double>>> escopos;
         std::unordered_map<std::string, unsigned> signatures;
 
-//        std::unordered_map<std::string, double> & operator [](const std::string & x) {
-//            auto & mp = escopos.back().second;
-//            if(mp.find(x) != mp.end()) mp[x];
-//            return escopos.back().second;
-//        }
-//
-//        scopeController& operator=(double val) {
-//            this->escopos.back().second = val;
-//        }
-
         unsigned getMethodParamsSize(const std::string& s) {
             return signatures[s];
         }
@@ -29,13 +19,13 @@ namespace sem {
         }
 
         bool isValidMethod(const std::string& id) const {
-            return signatures.find(id) != signatures.end();
+            return signatures.contains(id);
         }
 
         bool isValid(std::string id) const {
             if(id[0] == '-') id.erase(0, 1);
             auto & mp = escopos.back().second;
-            return mp.find(id) != mp.end();
+            return mp.contains(id);
         }
 
         void updateValue(const std::string & id, const double val) {
@@ -48,7 +38,7 @@ namespace sem {
 
         bool declare(const std::string & id, const double val = 0) {
             auto & mp = escopos.back().second;
-            if(mp.find(id) != mp.end()) return false;
+            if(mp.contains(id)) return false;
             escopos.back().second[id] = val;
             return true;
         }

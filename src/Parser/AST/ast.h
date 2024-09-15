@@ -18,21 +18,21 @@ namespace ast {
         Node() = default;
         explicit Node(lex::Type type):
             type(type), value(type.asValue()) {}
-        Node(lex::Type type, std::string value):
+        Node(const lex::Type type, std::string value):
             type(type), value(std::move(value)) {}
         explicit Node(const lex::token& t):
             type(t.type), value(t.value), line(t.linha) {}
 
-        static Node* pointer(lex::Type type, std::string value) {
+        static Node* pointer(const lex::Type type, std::string value) {
             return new Node(type, std::move(value));
         }
 
-        static Node* pointer(lex::Type type) {
+        static Node* pointer(const lex::Type type) {
             return new Node(type);
         }
 
-        static Node* pointer(lex::token t) {
-            return new Node(std::move(t));
+        static Node* pointer(const lex::token & t) {
+            return new Node(t);
         }
 
         bool operator==(const Node* & node) const {

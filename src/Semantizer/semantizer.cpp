@@ -1,8 +1,9 @@
 #include "sem.h"
+#include "../Parser/AST/ast.h"
 
-bool avaluateExpressionIdentifierContext(ast::Node* node, sem::scopeController & scope) {
-    for(auto nd : node->tokens) {
-        if(nd->type == "Identifier") {
+bool avaluateExpressionIdentifierContext(const ast::Node* node, sem::scopeController & scope) {
+    for(const auto nd : node->tokens) {
+        if(nd->type.pattern == lex::Type::pattern::IDENTIFIER) {
             if(!scope.isValid(nd->value)) {
                 std::cout << "Variavel [" + nd->value + "] nao declarada!" << std::endl;
                 return false;
@@ -23,13 +24,13 @@ bool avaluateCommands(ast::Node* node, sem::scopeController & scope) {
                 std::cout << "Variavel [" + cur->tokens[0]->value + "] nao declarada!" << std::endl;
                 return false;
             }
-            if(cur->tokens[1]->type == "Input") continue;
+            if(cur->tokens[1]->type.pattern == lex::Type::pattern::INPUT) continue;
             if(!avaluateExpressionIdentifierContext(cur->tokens[1], scope)) return false;
         } else if(cur->value == "if" || cur->value == "while") {
             if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
             avaluateCommands(nd->tokens[2], scope);
             if(nd->tokens.size() > 3) avaluateCommands(nd->tokens[3]->tokens[1], scope); // Avalia Else
-        } else if(cur->type == "Identifier") {
+        } else if(cur->type.pattern == lex::Type::pattern::INPUT) {
             std::string methodId = cur->value;
             if(!scope.isValidMethod(methodId)) {
                 std::cout << "Metodo [" + methodId + "] inexistente!" << std::endl;
@@ -62,7 +63,7 @@ bool computeDeclarations(const ast::Node* node, sem::scopeController & scope) {
 
 bool computeParams(ast::Node* node, sem::scopeController & scope) {
     for(auto nd : node->tokens) {
-        if(nd->type == "PARAM") {
+        if(nd->type.pattern == lex::Type::pattern::PARAM) {
             // Deveria carregar os valores passados nos argumentos da função
             if(!scope.declare(nd->tokens[1]->value)) {
                 /*
@@ -81,10 +82,10 @@ bool computeParams(ast::Node* node, sem::scopeController & scope) {
 bool analyseMain(ast::Node* node, sem::scopeController & scope) {
     scope.initializeScope("main");
     for(auto nd : node->tokens) {
-        if(nd->type == "DC") {
+        if(nd->type.pattern == lex::Type::pattern::DC) {
             if(!computeDeclarations(nd, scope)) return false;
         }
-        if(nd->type == "CMDS") {
+        if(nd->type.pattern == lex::Type::pattern::CMDS) {
             if(!avaluateCommands(nd, scope)) return false;
         }
     }
@@ -94,25 +95,25 @@ bool analyseMain(ast::Node* node, sem::scopeController & scope) {
 bool analyseMethod(ast::Node* node, sem::scopeController & scope) {
     scope.initializeScope(node->tokens[1]->tokens[1]->value);
     for(auto nd : node->tokens) {
-        if(nd->type == "SIGNATURE") {
+        if(nd->type.pattern == lex::Type::pattern::SIGNATURE) {
             if(nd->tokens.size() > 2) {
                 if(!computeParams(nd->tokens[2], scope)) return false;
             }
         }
-        if(nd->type == "RETURN") {
+        if(nd->type.pattern == lex::Type::pattern::RETURN) {
             if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
         }
-        if(nd->type == "DC") {
+        if(nd->type.pattern == lex::Type::pattern::DC) {
             if(!computeDeclarations(nd, scope)) return false;
         }
-        if(nd->type == "CMDS") {
+        if(nd->type.pattern == lex::Type::pattern::CMDS) {
             if(!avaluateCommands(nd, scope)) return false;
         }
     }
     return true;
 }
 
-bool analyse(ast::Node* root) {
+bool analyse(const ast::Node* root) {
     sem::scopeController scope;
 
     // Armazena a declaração do método 'main'
@@ -132,9 +133,9 @@ bool analyse(ast::Node* root) {
         }
     }
     for(auto nd : root->tokens) {
-        if(nd->type == "INIT") {
+        if(nd->type.pattern == lex::Type::pattern::INIT) {
             if(!analyseMain(nd, scope)) return false;
-        } else if(nd->type == "METODO") {
+        } else if(nd->type.pattern == lex::Type::pattern::METODO) {
             if(!analyseMethod(nd, scope)) return false;
         }
     }

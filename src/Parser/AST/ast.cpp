@@ -1,34 +1,8 @@
 #include "expressionAvaluation.cpp"
 
-std::deque<ast::Node*> getExpression(std::deque<ast::Node*> v, ast::Node* & cur);
-void simplifyExpression(ast::Node* node, std::deque<ast::Node*> & exp);
+void simplifyExpression(const ast::Node* node, std::deque<ast::Node*> & exp);
 
-void explore(ast::Node* node, int i = 0) {
-    std::cout << std::endl << ((node->value.empty()) ? "@" : tab(i) + std::to_string(i) + " " + node->value) << " ";
-    for(int j = 0; j < size(node->tokens); j++) {
-        auto n = node->tokens[j];
-        if(n->tokens.empty()) std::cout << ((n->value.empty()) ? "@" : n->value) << " ";
-        else {
-            explore(n, i + 1);
-            //if(j != size(node->tokens) - 1) std::cout << std::endl << tab(i) + std::to_string(i) + " ";
-        }
-    }
-}
-
-void exploreT(ast::Node* node, int i = 0) {
-    for(int j = 0; j < size(node->tokens); j++) {
-        auto n = node->tokens[j];
-        std::cout << std::endl << tab(i) << "[(" << std::to_string(i) << ":" << std::to_string(j) << "):" << n->type.asString() << ", " << n->value << "]";
-        exploreT(n, i + 1);
-    }
-}
-
-void explore02(ast::Node* node, int i = 0) {
-    std::cout << std::endl << tab(i) << "[(0:0):" << node->type.asString() << ", " << node->value << "]";
-    exploreT(node, i + 1);
-}
-
-void getVars(std::deque<ast::Node*> & v, ast::Node* cur) {
+void getVars(std::deque<ast::Node*> & v, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto n : cur->tokens) {
         if(n->type.pattern == lex::Type::pattern::IDENTIFIER) v.push_back(n);
@@ -36,11 +10,11 @@ void getVars(std::deque<ast::Node*> & v, ast::Node* cur) {
     }
 }
 
-void getDeclarations(std::deque<ast::Node*> & dc, ast::Node* cur) {
+void getDeclarations(std::deque<ast::Node*> & dc, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto n : cur->tokens) {
         if(n->type.pattern == lex::Type::pattern::VAR) {
-            for(auto b : n->tokens) {
+            for(const auto b : n->tokens) {
                 if(b->type.pattern == lex::Type::pattern::VARS) {
                     std::deque<ast::Node*> vars;
                     getVars(vars, b);
@@ -55,7 +29,7 @@ void getDeclarations(std::deque<ast::Node*> & dc, ast::Node* cur) {
     }
 }
 
-void getCmds(std::deque<ast::Node*> & cmds, ast::Node* cur) {
+void getCmds(std::deque<ast::Node*> & cmds, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto & n : cur->tokens) {
         if(n->type.pattern == lex::Type::pattern::CMD || n->type.pattern == lex::Type::pattern::CONDITIONAL_CMD) {
@@ -116,7 +90,7 @@ void orderAtribution(ast::Node* & node) {
     node->tokens.pop_back(); // Retirar "REST_IDENT do final de Node(CMD)"
 }
 
-void simplifyExpression(ast::Node* node, std::deque<ast::Node*> & exp) {
+void simplifyExpression(const ast::Node* node, std::deque<ast::Node*> & exp) {
     for(auto nd : node->tokens) {
         if(nd->type.pattern == lex::Type::pattern::NUM || nd->type.pattern == lex::Type::pattern::OPERATOR || nd->type.pattern == lex::Type::pattern::IDENTIFIER) exp.push_back(nd);
         simplifyExpression(nd, exp);
@@ -261,13 +235,13 @@ void eraseEmptyProductions(ast::Node* & node) {
 }
 
 void removeInit(ast::Node* & root) {
-    auto init = root->tokens[1];
+    const auto init = root->tokens[1];
 
     auto itInit = init->tokens.begin();
     while(itInit != init->tokens.end()) {
         if((*itInit)->type.pattern != lex::Type::pattern::KEYWORD) break;
         init->tokens.erase(itInit);
-        itInit++;
+        ++itInit;
     }
 
     init->value = "public static void main";
@@ -297,7 +271,6 @@ ast::Node* compress(ast::Node* & root) {
     root->tokens.pop_front();
 
     removeInit(root);
-    //exploreNode02(root);
     compressTest(root);
     return root;
 }
