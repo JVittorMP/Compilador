@@ -1,5 +1,6 @@
 #ifndef CMD_H
 #define CMD_H
+
 #include "../basic.h"
 
 namespace cmd {
@@ -28,7 +29,7 @@ namespace cmd {
         PARA,
         CHPR,
         RTPR,
-        PARM,
+        PRMT,
         PSHR,
         ERRO
     };
@@ -58,7 +59,7 @@ namespace cmd {
         if(s == "PARA") return cmd::command::PARA;
         if(s == "CHPR") return cmd::command::CHPR;
         if(s == "RTPR") return cmd::command::RTPR;
-        if(s == "PARM") return cmd::command::PARM;
+        if(s == "PRMT") return cmd::command::PRMT;
         if(s == "PSHR") return cmd::command::PSHR;
         return command::ERRO;
     }
@@ -103,15 +104,14 @@ namespace cmd {
         }
 
         void initializeJump(Cmd* & cmd) {
-//            if(!dsv.empty()) {
-//                dsv.back()->args.push_back(std::to_string(line + 1));
-//            }
             dsv.emplace_back(cmd);
         }
 
-        explicit Code(const std::string & file_name): file(file_name) {
-            if(!file) std::cout << "Error in creating file!!!";
-            else std::cout << "Success in creating file!!!";
+        explicit Code(const std::string & fileName): file(fileName) {
+            if(!file) {
+                std::string msg = std::format("Error in creating file '{}'", fileName);
+                throw compiler::Exception(compiler::Exception::type::RUNTIME, msg);
+            }
         };
 
         void generateCode() {

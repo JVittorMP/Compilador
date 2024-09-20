@@ -1,11 +1,8 @@
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
-#include "../basic.h"
-#include "../Generator/cmd.h"
-#include "../Semantizer/sem.h"
+namespace exec {
 
-namespace gen {
     class Interpreter {
     public:
         std::deque<cmd::Cmd> cmds = {cmd::Cmd("INIT")};
@@ -18,8 +15,10 @@ namespace gen {
             std::string line;
             unsigned l = 0;
 
-            if(!code) std::cout << "Error in creating file!!!" << std::endl;
-            else std::cout << "Success in creating file!!!" << std::endl;
+            if(!code) {
+                std::string msg = std::format("Error in opening object-code file with path '{}'", path);
+                throw compiler::Exception(compiler::Exception::type::RUNTIME, msg);
+            }
 
             while(l++, getline(code, line)) {
                 std::deque<std::string> args;

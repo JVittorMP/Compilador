@@ -16,7 +16,7 @@ public class teste {
         if(n >= 1) {
             System.out.println(x);
             n = n - 1;
-            print(b, x, n);
+            fib(b, x, n);
         }
         return 0;
     }

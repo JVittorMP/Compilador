@@ -1,122 +1,188 @@
-#include "sem.h"
-#include "../Parser/AST/ast.h"
+#include "../def.h"
 
-bool avaluateExpressionIdentifierContext(const ast::Node* node, sem::scopeController & scope) {
+/**
+ * @def
+ * Busca recursivamente por identificadores presentes na árvore de expressões passada,
+ * verificando se as referidas variáveis são válidas (pertencem ao escopo) e se foram
+ * corretamente declaradas anteriormente.
+ *
+ * @param node
+ * Nó raíz de uma subárvore que representa uma expressão.
+ */
+void sem::avaluateExpressionIdentifierContext(const ast::Node* node, sem::scopeController & scope) {
     for(const auto nd : node->tokens) {
         if(nd->type.pattern == lex::Type::pattern::IDENTIFIER) {
-            if(!scope.isValid(nd->value)) {
-                const std::string msg = "On Line " + std::to_string(nd->line) + ": Variavel [" + nd->value + "] Ausente!";
-                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
-            }
+            if(scope.isValid(nd->value)) continue;
+            const std::string msg = "On Line " + std::to_string(nd->line) + ": Variavel [" + nd->value + "] Ausente!";
+            throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
         }
         avaluateExpressionIdentifierContext(nd, scope);
     }
-    return true;
 }
 
-bool avaluateCommands(ast::Node* node, sem::scopeController & scope) {
+/**
+ * @def
+ * Procedimento que percorre cada um dos comandos, identificando seu tipo e chamando
+ * o procedimento adequado para tratar a sua respectiva subárvore.
+ *
+ * @param node
+ * Nó raíz de uma subárvore que agrupa todos os comandos declarados em cada escopo.
+ */
+void sem::avaluateCommands(ast::Node* node, sem::scopeController & scope) {
     for(auto nd : node->tokens) {
-        auto cur = nd->tokens[0];
-        if(cur->value == "System.out.println") {
-            if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
-        } else if(cur->value == "=") {
-            if(!scope.isValid(cur->tokens[0]->value)) {
-                const std::string msg =  "On Line " + std::to_string(cur->tokens[0]->line) + ": Variavel [" + cur->tokens[0]->value + "] Ausente!";
-                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
+        auto cur = nd->tokens.front();
+        switch(cur->type.pattern) {
+            case lex::Type::pattern::OUTPUT:
+                avaluateExpressionIdentifierContext(nd->tokens[1], scope);
+                break;
+            case lex::Type::pattern::OPERATOR:
+            case lex::Type::pattern::ATRIBUICAO: {
+                const auto id = cur->tokens.front();
+                if (!scope.isValid(cur->tokens[0]->value)) {
+                    const std::string msg = std::format("On Line {}: Variavel [{}] Ausente!", id->line, id->value);;
+                    throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
+                }
+                if (cur->tokens[1]->type.pattern == lex::Type::pattern::INPUT) return;
+                avaluateExpressionIdentifierContext(cur->tokens[1], scope);
+                break;
             }
-            if(cur->tokens[1]->type.pattern == lex::Type::pattern::INPUT) continue;
-            if(!avaluateExpressionIdentifierContext(cur->tokens[1], scope)) return false;
-        } else if(cur->value == "if" || cur->value == "while") {
-            if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
-            avaluateCommands(nd->tokens[2], scope);
-            if(nd->tokens.size() > 3) avaluateCommands(nd->tokens[3]->tokens[1], scope); // Avalia Else
-        } else if(cur->type.pattern == lex::Type::pattern::IDENTIFIER) {
-            std::string methodId = cur->value;
-            if(!scope.isValidMethod(methodId)) {
-                const std::string msg = "Metodo [" + methodId + "] Inexistente!";
-                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
+            case lex::Type::pattern::KEYWORD:
+            case lex::Type::pattern::WHILE:
+            case lex::Type::pattern::IF:
+                avaluateExpressionIdentifierContext(nd->tokens[1], scope);
+                avaluateCommands(nd->tokens[2], scope);
+                if(nd->tokens.size() > 3) avaluateCommands(nd->tokens[3]->tokens[1], scope);
+                break;
+            case lex::Type::pattern::IDENTIFIER: {
+                std::string methodId = cur->value;
+                if (!scope.isValidMethod(methodId)) {
+                    const std::string msg = std::format("Metodo [{}] Inexistente!", methodId);
+                    throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
+                }
+                unsigned args = nd->tokens[1]->tokens.size();
+                unsigned params = scope.getMethodParamsSize(methodId);
+                if (args != params) {
+                    const std::string msgPt1 = std::format("Quantidade de argumentos passados ao metodo [{}] incompativel! {}", methodId, '\n');
+                    const std::string msgPt2 = std::format("Esperado [{}] argumentos, [{}] parametros recebidos!", args, params);
+                    throw compiler::Exception(compiler::Exception::type::SEMANTIC, msgPt1 + msgPt2);
+                }
+                avaluateExpressionIdentifierContext(nd->tokens[1], scope);
+                break;
             }
-            unsigned args = nd->tokens[1]->tokens.size();
-            unsigned params = scope.getMethodParamsSize(methodId);
-            if(args != params) {
-                const std::string msgPt1 = "Quantidade de argumentos passados ao metodo [" + methodId + "] incompativel!";
-                const std::string msgPt2 = "\n\tEsperado [" + std::to_string(args) + "] argumentos, [" + std::to_string(params) + "] parametros recebidos!";
-                throw compiler::Exception(compiler::exception::SEMANTIC, msgPt1 + msgPt2);
-            }
-            if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
+            default:
+                std::string msg = std::format("Estrutura [{}] Nao Identificada", cur->type.asString());
+                throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
         }
     }
-    return true;
 }
 
-bool computeDeclarations(const ast::Node* node, sem::scopeController & scope) {
+/**
+ * @def
+ * Procedimento que avalia a validade das variáveis declaradas para o respectivo escopo,
+ * identificando redundâncias na declaração de variáveis.
+ *
+ * @param node
+ * Nó raíz de uma subárvore que representa a região de declaração de cada escopo.
+ */
+void sem::computeDeclarations(const ast::Node* node, sem::scopeController & scope) {
     for(const auto nd : node->tokens) {
         for(const auto id : nd->tokens[1]->tokens) {
-            if(!scope.declare(id->value)) {
-                const std::string msg = "On Line " + std::to_string(id->line) + ": Declaracao redundante do identificador [" + id->value + "]";
-                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
-            }
+            if(scope.declare(id->value)) continue;
+            const std::string msg = std::format("On Line {}: Declaracao redundante do identificador [{}]", id->line, id->value);
+            throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
         }
     }
-    return true;
 }
 
-bool computeParams(ast::Node* node, sem::scopeController & scope) {
+/**
+ * @def
+ * Avalia a validade dos parâmetros da assinatura de um método.
+ *
+ * @param node
+ * Nó raíz de uma subárvore que representa os parâmetros contidos na assinatura de um método.
+ */
+void sem::computeParams(ast::Node* node, sem::scopeController & scope) {
     for(auto nd : node->tokens) {
         if(nd->type.pattern == lex::Type::pattern::PARAM) {
+            const auto param = nd->tokens[1];
             // Deveria carregar os valores passados nos argumentos da função
-            if(!scope.declare(nd->tokens[1]->value)) {
+            if(!scope.declare(param->value)) {
                 /*
                  * Essa linha é improvável de acontecer, haja vista que contabilizamos um novo escopo e os
                  * parâmetros da função são as primeiras declarações do novo escopo
                  */
-                const std::string msg = "On Line " + std::to_string(nd->tokens[1]->line) + ": Declaracao redundante do identificador [" + nd->tokens[1]->value + "]";
-                throw compiler::Exception(compiler::exception::SEMANTIC, msg);
+                const std::string msg = std::format("On Line {}: Declaracao redundante do identificador [{}]", param->line, param->value);
+                throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
             }
         }
         computeParams(nd, scope);
     }
-    return true;
 }
 
-bool analyseMain(ast::Node* node, sem::scopeController & scope) {
+/**
+ * @def
+ * Avalia as duas subestruturas contidas no método do procedimento de inicialização da classe.
+ *
+ * @param node
+ * Nó raiz de uma subárvore que representa o método inicial da classe.
+ */
+void sem::analyseMain(ast::Node* node, sem::scopeController & scope) {
     scope.initializeScope("main");
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::DC) {
-            if(!computeDeclarations(nd, scope)) return false;
-        }
-        if(nd->type.pattern == lex::Type::pattern::CMDS) {
-            if(!avaluateCommands(nd, scope)) return false;
+        switch(nd->type.pattern) {
+            case lex::Type::pattern::DC:
+                computeDeclarations(nd, scope);
+                break;
+            case lex::Type::pattern::CMDS:
+                avaluateCommands(nd, scope);
+                break;
+            default:
+                std::string msg = std::format("Estrutura [{}] Nao Identificada", nd->type.asString());
+                throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
         }
     }
-    return true;
 }
 
-bool analyseMethod(ast::Node* node, sem::scopeController & scope) {
+/**
+ * @def
+ * Avalia as duas subestruturas contidas no procedimento de inicialização da classe.
+ *
+ * @param node
+ * Nó raiz de uma subárvore que representa o método inicial da classe.
+ */
+void sem::analyseMethod(ast::Node* node, sem::scopeController & scope) {
     scope.initializeScope(node->tokens[1]->tokens[1]->value);
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::SIGNATURE) {
-            if(nd->tokens.size() > 2) {
-                if(!computeParams(nd->tokens[2], scope)) return false;
-            }
-        }
-        if(nd->type.pattern == lex::Type::pattern::RETURN) {
-            if(!avaluateExpressionIdentifierContext(nd->tokens[1], scope)) return false;
-        }
-        if(nd->type.pattern == lex::Type::pattern::DC) {
-            if(!computeDeclarations(nd, scope)) return false;
-        }
-        if(nd->type.pattern == lex::Type::pattern::CMDS) {
-            if(!avaluateCommands(nd, scope)) return false;
+        switch(nd->type.pattern) {
+            case lex::Type::pattern::SIGNATURE:
+                if(nd->tokens.size() > 2) computeParams(nd->tokens[2], scope);
+                break;
+            case lex::Type::pattern::RETURN:
+                avaluateExpressionIdentifierContext(nd->tokens[1], scope);
+                break;
+            case lex::Type::pattern::DC:
+                computeDeclarations(nd, scope);
+                break;
+            case lex::Type::pattern::CMDS:
+                avaluateCommands(nd, scope);
+                break;
+            default:
+                std::string msg = std::format("Estrutura [{}] Nao Identificada", nd->type.asString());
+                throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
         }
     }
-    return true;
 }
 
-bool analyse(const ast::Node* root) {
+/**
+ * @def
+ * Procedimento que verifica a estrutura dos procedimentos do código,
+ * chamando as rotinas de tratamento adequadas para cada caso.
+ *
+ * @param root
+ * Nó raíz da Árvore Sintática Abstrata que representa o código.
+ */
+void sem::semanticAnalysis(const ast::Node* root) {
     sem::scopeController scope;
-
-    // Armazena a declaração do método 'main'
     scope.saveSignature("main");
 
     // Analisa se existe declaração de método
@@ -134,12 +200,16 @@ bool analyse(const ast::Node* root) {
     }
     for(auto nd : root->tokens) {
         if(nd->type.pattern == lex::Type::pattern::INIT) {
-            if(!analyseMain(nd, scope)) return false;
+            analyseMain(nd, scope);
         } else if(nd->type.pattern == lex::Type::pattern::METODO) {
-            if(!analyseMethod(nd, scope)) return false;
+            analyseMethod(nd, scope);
         }
     }
-    return true;
+}
+
+void sem::analyse(const ast::Node* root) {
+    semanticAnalysis(root);
+    std::cout << "Semantic Analysis Concluded!" << std::endl;
 }
 
 

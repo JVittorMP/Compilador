@@ -1,11 +1,6 @@
 #ifndef COMPILADORES_AST_H
 #define COMPILADORES_AST_H
 
-#include <utility>
-
-#include "../../basic.h"
-#include "../../Lexer/lex.h"
-
 namespace ast {
 
     class Node {
@@ -16,12 +11,9 @@ namespace ast {
         std::deque<Node*> tokens;
 
         Node() = default;
-        explicit Node(lex::Type type):
-            type(type), value(type.asValue()) {}
-        Node(const lex::Type type, std::string value):
-            type(type), value(std::move(value)) {}
-        explicit Node(const lex::token& t):
-            type(t.type), value(t.value), line(t.linha) {}
+        explicit Node(lex::Type type): type(type), value(type.asValue()) {}
+        explicit Node(const lex::token& t): type(t.type), value(t.value), line(t.linha) {}
+        Node(const lex::Type type, std::string value): type(type), value(std::move(value)) {}
 
         static Node* pointer(const lex::Type type, std::string value) {
             return new Node(type, std::move(value));

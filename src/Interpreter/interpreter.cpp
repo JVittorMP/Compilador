@@ -1,11 +1,13 @@
-#include "interpreter.h"
+#include "../def.h"
 
-#include "../basic.h"
-
-#include "../Generator/cmd.h"
-#include "../Semantizer/sem.h"
-
-void interpret(gen::Interpreter interpreter) {
+/**
+ * @def
+ * Procedimento responsável por realizar a interpretação
+ * do código-objeto, associando uma série de passos a cada
+ * instrução obtida.
+ *
+ */
+void exec::interpret(exec::Interpreter interpreter) {
     unsigned i = interpreter.cursor;
     bool flag = true, jump = false;
     while(flag) {
@@ -108,7 +110,7 @@ void interpret(gen::Interpreter interpreter) {
             case cmd::command::DIVI: {
                 const double s = interpreter.popStack();
                 const double f = interpreter.popStack();
-                if(s == 0) throw compiler::Exception(compiler::exception::RUNTIME, "Division by 0");
+                if(s == 0) throw compiler::Exception(compiler::Exception::type::RUNTIME, "Division by 0");
                 interpreter.dados.push(f / s);
                 break;
             }
@@ -129,15 +131,15 @@ void interpret(gen::Interpreter interpreter) {
                 jump = true;
                 break;
             }
-            case cmd::command::PARM:
+            case cmd::command::PRMT:
                 interpreter.dados.push(interpreter.scope.returnVarValue(cmd.args[0]));
                 break;
             case cmd::command::PSHR:
                 interpreter.dados.push(std::stod(cmd.args[0]));
                 break;
             case cmd::command::ERRO:
-                const std::string msg = "Erro no Comando [" + std::to_string(i) + "]: " + cmd.toString();
-                throw compiler::Exception(compiler::exception::RUNTIME, msg);
+                const std::string msg = std::format("Erro no Comando [{}]: {}", i, cmd.toString());
+                throw compiler::Exception(compiler::Exception::type::RUNTIME, msg);
         }
         if(jump) jump = false;
         else i++;
@@ -145,6 +147,10 @@ void interpret(gen::Interpreter interpreter) {
 }
 
 int main() {
-    const gen::Interpreter interpreter("../Documentos/code/code.txt");
-    interpret(interpreter);
+    try {
+        const exec::Interpreter interpreter("../Documentos/code/code.txt");
+        exec::interpret(interpreter);
+    } catch(compiler::Exception & e) {
+        std::cerr << e.what() << std::endl;
+    }
 }

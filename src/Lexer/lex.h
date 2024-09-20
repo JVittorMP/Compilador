@@ -1,6 +1,8 @@
 #ifndef COMPILADORES_LEX_H
 #define COMPILADORES_LEX_H
 
+#include "../basic.h"
+
 namespace lex {
     constexpr bool TERMINAL = true;
     constexpr bool NON_TERMINAL = false;
@@ -460,6 +462,10 @@ namespace lex {
             std::cout << l << ": [" << k.asString() << ", " << v << "]" << std::endl;
         }
     }
+
+    // Function Definitions
+
+
 
 }
 

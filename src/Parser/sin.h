@@ -27,37 +27,6 @@ namespace sin {
         }
     };
 
-    int PROG(ast::Node* node, cursor & cursor);
-    int INIT(ast::Node* node, cursor & cursor);
-    int METODO(ast::Node* node, cursor & cursor);
-    int PARAMS(ast::Node* node, cursor & cursor);
-    int MAIS_PARAMS(ast::Node* node, cursor & cursor);
-    int DC(ast::Node* node, cursor & cursor);
-    int MAIS_DC(ast::Node* node, cursor & cursor);
-    int VAR(ast::Node* node, cursor & cursor);
-    int VARS(ast::Node* node, cursor & cursor);
-    int MAIS_VAR(ast::Node* node, cursor & cursor);
-    int TIPO(ast::Node* node, cursor & cursor);
-    int CMDS(ast::Node* node, cursor & cursor);
-    int CONDITIONAL_CMD(ast::Node* node, cursor & cursor);
-    int CMD(ast::Node* node, cursor & cursor);
-    int PFALSA(ast::Node* node, cursor & cursor);
-    int RESTO_IDENT(ast::Node* node, cursor & cursor);
-    int LISTA_ARG(ast::Node* node, cursor & cursor);
-    int ARGUMENTOS(ast::Node* node, cursor & cursor);
-    int MAIS_IDENT(ast::Node* node, cursor & cursor);
-    int EXP_IDENT(ast::Node* node, cursor & cursor);
-    int CONDICAO(ast::Node* node, cursor & cursor);
-    int RELACAO(ast::Node* node, cursor & cursor);
-    int EXPRESSAO(ast::Node* node, cursor & cursor);
-    int TERMO(ast::Node* node, cursor & cursor);
-    int OP_UN(ast::Node* node, cursor & cursor);
-    int FATOR(ast::Node* node, cursor & cursor);
-    int OUTROS_TERMOS(ast::Node* node, cursor & cursor);
-    int OP_AD(ast::Node* node, cursor & cursor);
-    int MAIS_FATORES(ast::Node* node, cursor & cursor);
-    int OP_MUL(ast::Node* node, cursor & cursor);
-
     ast::Node* parse(cursor & cursor);
 
     std::string tab(const int i) {

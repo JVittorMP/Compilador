@@ -1,7 +1,10 @@
-#include "sin.h"
-#include "AST/ast.h"
+#include "../def.h"
 
-int findNonTerminal(const enum lex::Type::pattern p, ast::Node* node, sin::cursor & cursor) {
+/**
+ * @def
+ * Direciona o fluxo de execução ao bloco que trata o elemento não terminal corrente.
+ */
+int sin::findNonTerminal(const enum lex::Type::pattern p, ast::Node* node, sin::cursor & cursor) {
     switch (p) {
         case lex::Type::pattern::PROG :
             if(PROG(node, cursor)) return SUCCESS;
@@ -98,7 +101,14 @@ int findNonTerminal(const enum lex::Type::pattern p, ast::Node* node, sin::curso
     }
 }
 
-int isProductionValid(ast::Node* node, sin::cursor & cursor, std::deque<lex::token> & lexemas) {
+/**
+ *
+ * @def
+ * Avalia se a produção atual é válida
+ * <br> Produção Terminal: Tenta realizar um match entre os tokens
+ * <br> Produção Não Terminal: Continua a busca por um elemento terminal
+ */
+int sin::isProductionValid(ast::Node* node, sin::cursor & cursor, std::deque<lex::token> & lexemas) {
     for(auto & lexema : lexemas) {
         if(cursor.token().value == "$") return FAIL;
         if(lexema.type.status()) {
@@ -108,7 +118,7 @@ int isProductionValid(ast::Node* node, sin::cursor & cursor, std::deque<lex::tok
             node->tokens.push_back(ast::Node::pointer(cursor.token()));
             cursor.next();
         } else {
-            auto* novo = ast::Node::pointer(lexema.type, lexema.value);
+            auto novo = ast::Node::pointer(lexema.type, lexema.value);
             node->tokens.push_back(novo);
             if(!findNonTerminal(lexema.type.pattern, novo, cursor)) return FAIL;
         }
@@ -411,11 +421,6 @@ int sin::CONDICAO(ast::Node* node, cursor & cursor) {
     return FAIL;
 }
 
-bool isOperator(const std::string& s) {
-    return s == "<=" || s == ">=" || s == "==" || s == "!=" || s == "<" || s== ">";
-}
-
-
 int sin::RELACAO(ast::Node* node, cursor & cursor) {
     if(/*isOperator(cursor.token().value)*/ cursor.token().type == lex::Type(lex::Type::pattern::OPERATOR)) {
         node->tokens.push_back(ast::Node::pointer(cursor.token()));
@@ -516,16 +521,14 @@ int sin::OP_MUL(ast::Node* node, cursor & cursor) {
     return FAIL;
 }
 
-// Validar para lançar exceção, de modo a interromper o fluxo do programa
 ast::Node* sin::parse(cursor & cursor) {
-    auto* root = ast::Node::pointer(lex::Type(lex::Type::pattern::PROG));
+    auto root = ast::Node::pointer(lex::Type(lex::Type::pattern::PROG));
     if(PROG(root, cursor)) {
         std::cout << "Syntatic Analisis Concluded!" <<  std::endl;
     } else {
         const auto token = cursor.previous();
-        const std::string msg = "On Line " + std::to_string(token.linha) + ": After [" + token.value + "] Declaration!";
-        throw compiler::Exception(compiler::exception::SYNTACTIC, msg);
-        //std::cout << "Parser: Tudo Errado! Fim dos Tempos!" <<  std::endl;
+        const std::string msg = std::format("On Line {}: After [{}] Declaration!", token.linha, token.value);
+        throw compiler::Exception(compiler::Exception::type::SYNTACTIC, msg);
     }
     return root;
 }
