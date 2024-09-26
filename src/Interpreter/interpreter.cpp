@@ -5,7 +5,6 @@
  * Procedimento responsável por realizar a interpretação
  * do código-objeto, associando uma série de passos a cada
  * instrução obtida.
- *
  */
 void exec::interpret(exec::Interpreter interpreter) {
     unsigned i = interpreter.cursor;

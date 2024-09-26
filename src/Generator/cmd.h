@@ -109,7 +109,7 @@ namespace cmd {
 
         explicit Code(const std::string & fileName): file(fileName) {
             if(!file) {
-                std::string msg = std::format("Error in creating file '{}'", fileName);
+                std::string msg = std::format("Error in creating file '{}' at code generation stage", fileName);
                 throw compiler::Exception(compiler::Exception::type::RUNTIME, msg);
             }
         };

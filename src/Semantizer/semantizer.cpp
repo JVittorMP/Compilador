@@ -7,11 +7,11 @@
  * corretamente declaradas anteriormente.
  *
  * @param node
- * Nó raíz de uma subárvore que representa uma expressão.
+ * Nó raíz de uma subárvore que representa uma expressão aritmérica.
  */
 void sem::avaluateExpressionIdentifierContext(const ast::Node* node, sem::scopeController & scope) {
     for(const auto nd : node->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::IDENTIFIER) {
+        if(nd->type.pattern == lex::pattern::IDENTIFIER) {
             if(scope.isValid(nd->value)) continue;
             const std::string msg = "On Line " + std::to_string(nd->line) + ": Variavel [" + nd->value + "] Ausente!";
             throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
@@ -23,7 +23,7 @@ void sem::avaluateExpressionIdentifierContext(const ast::Node* node, sem::scopeC
 /**
  * @def
  * Procedimento que percorre cada um dos comandos, identificando seu tipo e chamando
- * o procedimento adequado para tratar a sua respectiva subárvore.
+ * o procedimento adequado para tratar a respectiva subárvore.
  *
  * @param node
  * Nó raíz de uma subárvore que agrupa todos os comandos declarados em cada escopo.
@@ -32,28 +32,28 @@ void sem::avaluateCommands(ast::Node* node, sem::scopeController & scope) {
     for(auto nd : node->tokens) {
         auto cur = nd->tokens.front();
         switch(cur->type.pattern) {
-            case lex::Type::pattern::OUTPUT:
+            case lex::pattern::OUTPUT:
                 avaluateExpressionIdentifierContext(nd->tokens[1], scope);
                 break;
-            case lex::Type::pattern::OPERATOR:
-            case lex::Type::pattern::ATRIBUICAO: {
+            case lex::pattern::OPERATOR:
+            case lex::pattern::ATRIBUICAO: {
                 const auto id = cur->tokens.front();
                 if (!scope.isValid(cur->tokens[0]->value)) {
                     const std::string msg = std::format("On Line {}: Variavel [{}] Ausente!", id->line, id->value);;
                     throw compiler::Exception(compiler::Exception::type::SEMANTIC, msg);
                 }
-                if (cur->tokens[1]->type.pattern == lex::Type::pattern::INPUT) return;
+                if (cur->tokens[1]->type.pattern == lex::pattern::INPUT) return;
                 avaluateExpressionIdentifierContext(cur->tokens[1], scope);
                 break;
             }
-            case lex::Type::pattern::KEYWORD:
-            case lex::Type::pattern::WHILE:
-            case lex::Type::pattern::IF:
+            case lex::pattern::KEYWORD:
+            case lex::pattern::WHILE:
+            case lex::pattern::IF:
                 avaluateExpressionIdentifierContext(nd->tokens[1], scope);
                 avaluateCommands(nd->tokens[2], scope);
                 if(nd->tokens.size() > 3) avaluateCommands(nd->tokens[3]->tokens[1], scope);
                 break;
-            case lex::Type::pattern::IDENTIFIER: {
+            case lex::pattern::IDENTIFIER: {
                 std::string methodId = cur->value;
                 if (!scope.isValidMethod(methodId)) {
                     const std::string msg = std::format("Metodo [{}] Inexistente!", methodId);
@@ -78,8 +78,8 @@ void sem::avaluateCommands(ast::Node* node, sem::scopeController & scope) {
 
 /**
  * @def
- * Procedimento que avalia a validade das variáveis declaradas para o respectivo escopo,
- * identificando redundâncias na declaração de variáveis.
+ * Procedimento que avalia a validade dos identificadores declaradas para o respectivo
+ * escopo, reconhecendo redundâncias na declaração de variáveis.
  *
  * @param node
  * Nó raíz de uma subárvore que representa a região de declaração de cada escopo.
@@ -103,7 +103,7 @@ void sem::computeDeclarations(const ast::Node* node, sem::scopeController & scop
  */
 void sem::computeParams(ast::Node* node, sem::scopeController & scope) {
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::PARAM) {
+        if(nd->type.pattern == lex::pattern::PARAM) {
             const auto param = nd->tokens[1];
             // Deveria carregar os valores passados nos argumentos da função
             if(!scope.declare(param->value)) {
@@ -121,19 +121,19 @@ void sem::computeParams(ast::Node* node, sem::scopeController & scope) {
 
 /**
  * @def
- * Avalia as duas subestruturas contidas no método do procedimento de inicialização da classe.
+ * Avalia as duas subestruturas contidas na configuração de inicialização da classe.
  *
  * @param node
- * Nó raiz de uma subárvore que representa o método inicial da classe.
+ * Nó raiz de uma subárvore que representa o procedimento inicial da classe.
  */
 void sem::analyseMain(ast::Node* node, sem::scopeController & scope) {
     scope.initializeScope("main");
     for(auto nd : node->tokens) {
         switch(nd->type.pattern) {
-            case lex::Type::pattern::DC:
+            case lex::pattern::DC:
                 computeDeclarations(nd, scope);
                 break;
-            case lex::Type::pattern::CMDS:
+            case lex::pattern::CMDS:
                 avaluateCommands(nd, scope);
                 break;
             default:
@@ -145,7 +145,7 @@ void sem::analyseMain(ast::Node* node, sem::scopeController & scope) {
 
 /**
  * @def
- * Avalia as duas subestruturas contidas no procedimento de inicialização da classe.
+ * Avalia as duas subestruturas contidas no procedimento da classe.
  *
  * @param node
  * Nó raiz de uma subárvore que representa o método inicial da classe.
@@ -154,16 +154,16 @@ void sem::analyseMethod(ast::Node* node, sem::scopeController & scope) {
     scope.initializeScope(node->tokens[1]->tokens[1]->value);
     for(auto nd : node->tokens) {
         switch(nd->type.pattern) {
-            case lex::Type::pattern::SIGNATURE:
+            case lex::pattern::SIGNATURE:
                 if(nd->tokens.size() > 2) computeParams(nd->tokens[2], scope);
                 break;
-            case lex::Type::pattern::RETURN:
+            case lex::pattern::RETURN:
                 avaluateExpressionIdentifierContext(nd->tokens[1], scope);
                 break;
-            case lex::Type::pattern::DC:
+            case lex::pattern::DC:
                 computeDeclarations(nd, scope);
                 break;
-            case lex::Type::pattern::CMDS:
+            case lex::pattern::CMDS:
                 avaluateCommands(nd, scope);
                 break;
             default:
@@ -179,19 +179,18 @@ void sem::analyseMethod(ast::Node* node, sem::scopeController & scope) {
  * chamando as rotinas de tratamento adequadas para cada caso.
  *
  * @param root
- * Nó raíz da Árvore Sintática Abstrata que representa o código.
+ * Nó raíz da Árvore Sintática Abstrata representativa do programa.
+ *
+ * @Observações
+ *      Root Size Condition - Analisa de existe declaração de método
+ * <br> Signature Size Condition - Verifica se existe parâmetros
  */
 void sem::semanticAnalysis(const ast::Node* root) {
     sem::scopeController scope;
     scope.saveSignature("main");
 
-    // Analisa se existe declaração de método
     if(root->tokens.size() > 2) {
         auto signature = root->tokens[2]->tokens[0];
-        /*
-         * True: Há parâmetros no método
-         * False: Não há parâmetros
-         */
         if(signature->tokens.size() > 2) {
             scope.saveSignature(signature->tokens[0]->value, signature->tokens[2]->tokens.size());
         } else {
@@ -199,9 +198,9 @@ void sem::semanticAnalysis(const ast::Node* root) {
         }
     }
     for(auto nd : root->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::INIT) {
+        if(nd->type.pattern == lex::pattern::INIT) {
             analyseMain(nd, scope);
-        } else if(nd->type.pattern == lex::Type::pattern::METODO) {
+        } else if(nd->type.pattern == lex::pattern::METODO) {
             analyseMethod(nd, scope);
         }
     }

@@ -44,33 +44,32 @@ namespace sin {
     int MAIS_FATORES(ast::Node* node, cursor & cursor);
     int OP_MUL(ast::Node* node, cursor & cursor);
 
-    int findNonTerminal(enum lex::Type::pattern p, ast::Node* node, sin::cursor & cursor);
+    int findNonTerminal(enum lex::pattern p, ast::Node* node, sin::cursor & cursor);
     int isProductionValid(ast::Node* node, sin::cursor & cursor, std::deque<lex::token> & lexemas);
 }
 
 namespace ast {
+    void eraseEmptyProductions(ast::Node* & node);
     void simplifyExpression(const ast::Node* node, std::deque<ast::Node*> & exp);
     void getVars(std::deque<ast::Node*> & v, const ast::Node* cur);
     void getDeclarations(std::deque<ast::Node*> & dc, const ast::Node* cur);
     void getCmds(std::deque<ast::Node*> & cmds, const ast::Node* cur);
     void avaluateNegNum(ast::Node* & cur);
-    ast::Node* changeExpressionNode(ast::Node* ex);
     void orderAtribution(ast::Node* & node);
     void orderConditionals(ast::Node* & node);
     void orderOutput(ast::Node* & node);
     void getArguments(ast::Node* & node, std::deque<ast::Node*> & v);
-    ast::Node* orderArguments(ast::Node* & node);
     void filterCmds(ast::Node* & node);
     void getParams(std::deque<ast::Node*> & v, ast::Node* cur);
     void compressSignature(ast::Node* & node);
     void compressReturn(ast::Node* & node);
     void getMethod(ast::Node* node, std::deque<ast::Node*> & v);
     void compressStructure(ast::Node* & node);
-    void eraseEmptyProductions(ast::Node* & node);
     void removeInit(ast::Node* & root);
     void compress(ast::Node* & node);
+    ast::Node* changeExpressionNode(ast::Node* ex);
+    ast::Node* orderArguments(ast::Node* & node);
     ast::Node* filter(ast::Node* & root);
-    ast::Node* buildAST(ast::Node* root);
 }
 
 namespace sem {
@@ -87,8 +86,8 @@ namespace sem {
 namespace cmd {
     std::string getComparisonCmd(const std::string& s);
     std::string getOperatorCmd(const std::string& s);
-    void getExpression(ast::Node* node, sem::scopeController & scope, cmd::Code & code);
-    void getCondition(ast::Node* node, sem::scopeController & scope, cmd::Code & code);
+    void generateExpression(ast::Node* node, sem::scopeController & scope, cmd::Code & code);
+    void generateCondition(ast::Node* node, sem::scopeController & scope, cmd::Code & code);
     void generateCommands(ast::Node* node, sem::scopeController & scope, cmd::Code & code);
     bool generateDeclarations(const ast::Node* node, sem::scopeController & scope, cmd::Code & code);
     bool generateSignature(const ast::Node* node, sem::scopeController & scope, cmd::Code & code);

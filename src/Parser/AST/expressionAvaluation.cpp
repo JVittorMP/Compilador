@@ -51,7 +51,7 @@ namespace exp {
                 nodes.push(nd);
             } else if (isOperand(nd->value)) {
                 while (!ops.empty() && priority(ops.top(), nd->value)) {
-                    auto node = ast::Node::pointer(lex::Type(lex::Type::pattern::OPERATOR), pop(ops));
+                    auto node = ast::Node::pointer(lex::Type(lex::pattern::OPERATOR), pop(ops));
                     node->tokens.push_back(pop(nodes));
                     node->tokens.push_back(pop(nodes));
                     nodes.push(node);
@@ -60,7 +60,7 @@ namespace exp {
             }
         }
         while (!ops.empty()) {
-            auto node = ast::Node::pointer(lex::Type(lex::Type::pattern::OPERATOR), pop(ops));
+            auto node = ast::Node::pointer(lex::Type(lex::pattern::OPERATOR), pop(ops));
             node->tokens.push_back(pop(nodes));
             node->tokens.push_back(pop(nodes));
             nodes.push(node);

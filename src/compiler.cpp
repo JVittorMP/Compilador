@@ -12,7 +12,7 @@ int main() {
         const std::deque<lex::token> tokens = lex::scan(inputFile);
         sin::cursor cursor(tokens);
         ast::Node* root = sin::parse(cursor);
-        ast::Node* ast = ast::buildAST(root);
+        ast::Node* ast = ast::filter(root);
         sem::analyse(ast);
         cmd::generate(ast);
     } catch(compiler::Exception & e) {

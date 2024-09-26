@@ -9,7 +9,7 @@
 void ast::getVars(std::deque<ast::Node*> & v, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto n : cur->tokens) {
-        if(n->type.pattern == lex::Type::pattern::IDENTIFIER) v.push_back(n);
+        if(n->type.pattern == lex::pattern::IDENTIFIER) v.push_back(n);
         getVars(v, n);
     }
 }
@@ -24,12 +24,12 @@ void ast::getVars(std::deque<ast::Node*> & v, const ast::Node* cur) {
 void ast::getDeclarations(std::deque<ast::Node*> & dc, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto n : cur->tokens) {
-        if(n->type.pattern != lex::Type::pattern::VAR) {
+        if(n->type.pattern != lex::pattern::VAR) {
             getDeclarations(dc, n);
             continue;
         }
         for(const auto b : n->tokens) {
-            if(b->type.pattern != lex::Type::pattern::VARS) continue;
+            if(b->type.pattern != lex::pattern::VARS) continue;
             std::deque<ast::Node*> vars;
             getVars(vars, b);
             b->tokens = vars;
@@ -46,11 +46,11 @@ void ast::getDeclarations(std::deque<ast::Node*> & dc, const ast::Node* cur) {
 void ast::getCmds(std::deque<ast::Node*> & cmds, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto & n : cur->tokens) {
-        if(n->type.pattern == lex::Type::pattern::CMD || n->type.pattern == lex::Type::pattern::CONDITIONAL_CMD) {
-            if(n->tokens[0]->value == lex::Type::asValue(lex::Type::pattern::OUTPUT)) {
+        if(n->type.pattern == lex::pattern::CMD || n->type.pattern == lex::pattern::CONDITIONAL_CMD) {
+            if(n->tokens[0]->value == lex::Type::asValue(lex::pattern::OUTPUT)) {
                 std::deque<ast::Node*> subs;
                 for(auto nd : n->tokens) {
-                    if(!nd->type.status() || nd->value == lex::Type::asValue(lex::Type::pattern::OUTPUT)) subs.push_back(nd);
+                    if(!nd->type.status() || nd->value == lex::Type::asValue(lex::pattern::OUTPUT)) subs.push_back(nd);
                 }
                 n->tokens = subs;
             }
@@ -74,8 +74,8 @@ void ast::getCmds(std::deque<ast::Node*> & cmds, const ast::Node* cur) {
 void ast::avaluateNegNum(ast::Node* & cur) {
     if(cur->tokens.empty()) return;
     for(auto & nd : cur->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::TERMO) {
-            if(nd->tokens[0]->type.pattern == lex::Type::pattern::OP_UN) {
+        if(nd->type.pattern == lex::pattern::TERMO) {
+            if(nd->tokens[0]->type.pattern == lex::pattern::OP_UN) {
                 std::string s = "-" + nd->tokens[1]->tokens[0]->value;
                 nd->tokens[1]->tokens[0]->value = s;
                 nd->tokens.pop_front();
@@ -122,7 +122,7 @@ void ast::orderAtribution(ast::Node* & node) {
     ast::Node* & op = ri->tokens[0];
     ast::Node* & ex = ri->tokens[1]->tokens[0];
 
-    if(ex->type.pattern != lex::Type::pattern::INPUT) ex = changeExpressionNode(ex);
+    if(ex->type.pattern != lex::pattern::INPUT) ex = changeExpressionNode(ex);
 
     auto novo = ast::Node::pointer(op->type, op->value);
     novo->tokens.push_back(id);
@@ -142,7 +142,7 @@ void ast::orderAtribution(ast::Node* & node) {
  */
 void ast::simplifyExpression(const ast::Node* node, std::deque<ast::Node*> & exp) {
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::NUM || nd->type.pattern == lex::Type::pattern::OPERATOR || nd->type.pattern == lex::Type::pattern::IDENTIFIER) exp.push_back(nd);
+        if(nd->type.pattern == lex::pattern::NUM || nd->type.pattern == lex::pattern::OPERATOR || nd->type.pattern == lex::pattern::IDENTIFIER) exp.push_back(nd);
         simplifyExpression(nd, exp);
     }
 }
@@ -188,7 +188,7 @@ void ast::orderOutput(ast::Node* & node) {
  */
 void ast::getArguments(ast::Node* & node, std::deque<ast::Node*> & v) {
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::IDENTIFIER) v.push_back(nd);
+        if(nd->type.pattern == lex::pattern::IDENTIFIER) v.push_back(nd);
         getArguments(nd, v);
     }
 }
@@ -222,12 +222,12 @@ ast::Node* ast::orderArguments(ast::Node* & node) {
 void ast::filterCmds(ast::Node* & node) {
     for(auto & n : node->tokens) {
         ast::Node* cur = n->tokens.front();
-        if(cur->type.pattern == lex::Type::pattern::KEYWORD) {
-            if(cur->value == lex::Type::asValue(lex::Type::pattern::OUTPUT)) orderOutput(n);
-            if(cur->value == lex::Type::asValue(lex::Type::pattern::IF) || cur->value == lex::Type::asValue(lex::Type::pattern::WHILE)) orderConditionals(n);
+        if(cur->type.pattern == lex::pattern::KEYWORD) {
+            if(cur->value == lex::Type::asValue(lex::pattern::OUTPUT)) orderOutput(n);
+            if(cur->value == lex::Type::asValue(lex::pattern::IF) || cur->value == lex::Type::asValue(lex::pattern::WHILE)) orderConditionals(n);
         }
-        else if(cur->type.pattern == lex::Type::pattern::IDENTIFIER) {
-            if(n->tokens[1]->tokens.front()->type.pattern == lex::Type::pattern::OPERATOR) {
+        else if(cur->type.pattern == lex::pattern::IDENTIFIER) {
+            if(n->tokens[1]->tokens.front()->type.pattern == lex::pattern::OPERATOR) {
                 orderAtribution(n);
             } else {
                 if(!n->tokens[1]->tokens.empty()) n->tokens[1] = orderArguments(n->tokens[1]->tokens[0]->tokens[0]);
@@ -249,11 +249,11 @@ void ast::getParams(std::deque<ast::Node*> & v, ast::Node* cur) {
     if(cur->tokens.empty()) return;
     auto last = cur->tokens.back();
 
-    auto param = ast::Node::pointer(lex::Type(lex::Type::pattern::PARAM));
+    auto param = ast::Node::pointer(lex::Type(lex::pattern::PARAM));
     param->tokens.push_back(cur->tokens[0]);
     param->tokens.push_back(cur->tokens[1]);
     v.push_back(param);
-    if(last->type.pattern == lex::Type::pattern::MAIS_PARAMS) getParams(v, last->tokens.front());
+    if(last->type.pattern == lex::pattern::MAIS_PARAMS) getParams(v, last->tokens.front());
 }
 
 /**
@@ -292,12 +292,12 @@ void ast::compressReturn(ast::Node* & node) {
  * Nó raíz de uma subárvore que contém a estrutura de um método.
  */
 void ast::getMethod(ast::Node* node, std::deque<ast::Node*> & v) {
-    auto signature =  ast::Node::pointer(lex::Type(lex::Type::pattern::SIGNATURE));
-    auto retorno = ast::Node::pointer(lex::Type(lex::Type::pattern::RETURN));
+    auto signature =  ast::Node::pointer(lex::Type(lex::pattern::SIGNATURE));
+    auto retorno = ast::Node::pointer(lex::Type(lex::pattern::RETURN));
     for(auto & nd : node->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::IDENTIFIER) signature->tokens.push_front(nd);
-        if(nd->type.pattern == lex::Type::pattern::TIPO || nd->type.pattern == lex::Type::pattern::PARAMS) signature->tokens.push_back(nd);
-        if(nd->type.pattern == lex::Type::pattern::DC || nd->type.pattern == lex::Type::pattern::CMDS) v.push_back(nd);
+        if(nd->type.pattern == lex::pattern::IDENTIFIER) signature->tokens.push_front(nd);
+        if(nd->type.pattern == lex::pattern::TIPO || nd->type.pattern == lex::pattern::PARAMS) signature->tokens.push_back(nd);
+        if(nd->type.pattern == lex::pattern::DC || nd->type.pattern == lex::pattern::CMDS) v.push_back(nd);
     }
     retorno->tokens.push_back(node->tokens.end()[-2]);
     retorno->tokens.push_back(node->tokens.back());
@@ -316,18 +316,18 @@ void ast::compressStructure(ast::Node* & node) {
     if(node->tokens.empty()) return;
     std::deque<ast::Node*> v;
 
-    if(node->type.pattern == lex::Type::pattern::DC) {
+    if(node->type.pattern == lex::pattern::DC) {
         getDeclarations(v, node);
     }
-    else if(node->type.pattern == lex::Type::pattern::CMDS) {
+    else if(node->type.pattern == lex::pattern::CMDS) {
         getCmds(v, node);
     }
-    else if(node->type.pattern == lex::Type::pattern::METODO) {
+    else if(node->type.pattern == lex::pattern::METODO) {
         getMethod(node, v);
     }
 
     node->tokens = v;
-    if(node->type.pattern == lex::Type::pattern::CMDS) filterCmds(node);
+    if(node->type.pattern == lex::pattern::CMDS) filterCmds(node);
 }
 
 /**
@@ -341,12 +341,12 @@ void ast::compressStructure(ast::Node* & node) {
 void ast::eraseEmptyProductions(ast::Node* & node) {
     for(int i = 0; i < size(node->tokens); i++) {
         ast::Node* n = node->tokens[i];
-        if(n->type.pattern == lex::Type::pattern::PUNCTUATION) {
+        if(n->type.pattern == lex::pattern::PUNCTUATION) {
             node->tokens.erase(node->tokens.begin() + i--);
             continue;
         }
         if(n->tokens.empty()) continue;
-        if(n->tokens[0]->type.pattern == lex::Type::pattern::VAZIO) {
+        if(n->tokens[0]->type.pattern == lex::pattern::VAZIO) {
             node->tokens.erase(node->tokens.begin() + i--);
             continue;
         }
@@ -366,7 +366,7 @@ void ast::removeInit(ast::Node* & root) {
 
     auto itInit = init->tokens.begin();
     while(itInit != init->tokens.end()) {
-        if((*itInit)->type.pattern != lex::Type::pattern::KEYWORD) break;
+        if((*itInit)->type.pattern != lex::pattern::KEYWORD) break;
         init->tokens.erase(itInit);
         ++itInit;
     }
@@ -383,28 +383,35 @@ void ast::removeInit(ast::Node* & root) {
 void ast::compress(ast::Node* & node) {
     for(auto & n : node->tokens) {
         if(n->tokens.empty()) continue;
-        if(n->type.pattern == lex::Type::pattern::DC      ||
-           n->type.pattern == lex::Type::pattern::CMDS    ||
-           n->type.pattern == lex::Type::pattern::METODO) {
+        if(n->type.pattern == lex::pattern::DC      ||
+           n->type.pattern == lex::pattern::CMDS    ||
+           n->type.pattern == lex::pattern::METODO) {
             compressStructure(n);
         }
         compress(n);
     }
 }
 
+/**
+ * @def
+ * Filtra as entradas da Árvore Sintática Concreta, eliminando elementos desnecessários
+ * para a construção de uma Árvore Sintática Abstrata capaz de representar o programa.
+ *
+ * @Observações
+ * Pop Front Twice - Retira entradas Desnecessárias do Programa (public and class Keywords)
+ *
+ * @return
+ * Retorna uma Árvore Sintática Abstrata que representa uma estrutura sufientemente
+ * similar ao programa corrente analisado pelo compilador.
+ */
 ast::Node* ast::filter(ast::Node* & root) {
     eraseEmptyProductions(root);
 
-    // retirar entradas do programa (public, class)
     root->tokens.pop_front();
     root->tokens.pop_front();
 
     removeInit(root);
     compress(root);
+    sin::explore(root);
     return root;
-}
-
-ast::Node* ast::buildAST(ast::Node* root) {
-    ast::Node* ast = filter(root);
-    return ast;
 }

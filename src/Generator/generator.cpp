@@ -12,7 +12,6 @@
  * <br> CDES: Comparação Desigualdade
  * <br> CPMI: Comparação Menor Inclusivo
  * <br> CMAI: Comparação Maior Inclusivo
- *
  */
 std::string cmd::getComparisonCmd(const std::string& s) {
     if(s == "<") return "CPME";
@@ -34,7 +33,6 @@ std::string cmd::getComparisonCmd(const std::string& s) {
  * <br> SUBT: Intrução Subtração
  * <br> MULT: Intrução Multiplicação
  * <br> DIVI: Intrução Divisão
- *
  */
 std::string cmd::getOperatorCmd(const std::string& s) {
     if(s == "+") return "SOMA";
@@ -52,26 +50,25 @@ std::string cmd::getOperatorCmd(const std::string& s) {
  * à maneira que estão estruturadas,
  *
  * @Instruções
- *      CRCT: Indica o carregamento de uma constante ao topo da pilha <br>
- * <br> CRVL: Indica o carregamento de uma variável ao topo da pilha <br>
+ *      CRCT: Indica o carregamento de uma constante ao topo da pilha
+ * <br> CRVL: Indica o carregamento de uma variável ao topo da pilha
  *
  * @Observações
  * Early Return Pattern - O método não possui parâmetros.
- *
  */
-void cmd::getExpression(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
-    if(node->type.pattern == lex::Type::pattern::NUM) {
+void cmd::generateExpression(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
+    if(node->type.pattern == lex::pattern::NUM) {
         auto crct = new cmd::Cmd("CRCT", {node->value});
         code.saveCommand(crct);
         return;
     }
-    if(node->type.pattern == lex::Type::pattern::IDENTIFIER) {
+    if(node->type.pattern == lex::pattern::IDENTIFIER) {
         auto crvl = new cmd::Cmd("CRVL", {node->value});
         code.saveCommand(crvl);
         return;
     }
-    getExpression(node->tokens[1], scope, code);
-    getExpression(node->tokens[0], scope, code);
+    generateExpression(node->tokens[1], scope, code);
+    generateExpression(node->tokens[0], scope, code);
     auto opr = new cmd::Cmd(getOperatorCmd(node->value));
     code.saveCommand(opr);
 }
@@ -83,11 +80,10 @@ void cmd::getExpression(ast::Node* node, sem::scopeController & scope, cmd::Code
  *
  * @Instruções
  * DSVF: Indica um desvio condicional para a instrução do argumento.
- *
  */
-void cmd::getCondition(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
-    getExpression(node->tokens[0]->tokens[0], scope, code);
-    getExpression(node->tokens[2]->tokens[0], scope, code);
+void cmd::generateCondition(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
+    generateExpression(node->tokens[0]->tokens[0], scope, code);
+    generateExpression(node->tokens[2]->tokens[0], scope, code);
     auto comp = new cmd::Cmd(getComparisonCmd(node->tokens[1]->tokens[0]->value));
     code.saveCommand(comp);
     auto dsvf = new cmd::Cmd("DSVF");
@@ -113,21 +109,20 @@ void cmd::getCondition(ast::Node* node, sem::scopeController & scope, cmd::Code 
  *
  * @Observações
  * Early Return Pattern - O método não possui parâmetros.
- *
  */
 void cmd::generateCommands(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     for(auto nd : node->tokens) {
         auto cur = nd->tokens[0];
         if(cur->value == "System.out.println") {
-            getExpression(nd->tokens[1]->tokens[0], scope, code);
+            generateExpression(nd->tokens[1]->tokens[0], scope, code);
             auto impr = new cmd::Cmd("IMPR");
             code.saveCommand(impr);
         } else if(cur->value == "=") {
-            if(cur->tokens[1]->type.pattern == lex::Type::pattern::INPUT) {
+            if(cur->tokens[1]->type.pattern == lex::pattern::INPUT) {
                 auto leit = new cmd::Cmd("LEIT");
                 code.saveCommand(leit);
             } else {
-                getExpression(cur->tokens[1]->tokens[0], scope, code);
+                generateExpression(cur->tokens[1]->tokens[0], scope, code);
             }
             auto armz = new cmd::Cmd("ARMZ", {cur->tokens[0]->value});
             code.saveCommand(armz);
@@ -136,7 +131,7 @@ void cmd::generateCommands(ast::Node* node, sem::scopeController & scope, cmd::C
             code.ifsc += nd->tokens.size() > 3;
             auto cond = nd->tokens[1];
             auto cmds = nd->tokens[2];
-            getCondition(cond, scope, code);
+            generateCondition(cond, scope, code);
             generateCommands(cmds, scope, code);
 
             // Não tem else
@@ -156,14 +151,14 @@ void cmd::generateCommands(ast::Node* node, sem::scopeController & scope, cmd::C
             unsigned retorno = code.getLine();
             auto cond = nd->tokens[1];
             auto cmds = nd->tokens[2];
-            getCondition(cond, scope, code);
+            generateCondition(cond, scope, code);
             generateCommands(cmds, scope, code);
 
             // Indicar endereço do início do while
             auto dsvi = new cmd::Cmd("DSVI", {std::to_string(retorno)});
             code.saveCommand(dsvi);
             code.endJump();
-        } else if(cur->type.pattern == lex::Type::pattern::IDENTIFIER) {
+        } else if(cur->type.pattern == lex::pattern::IDENTIFIER) {
             auto pusher = new cmd::Cmd("PSHR");
             code.saveCommand(pusher);
             code.initializeJump(pusher);
@@ -188,7 +183,6 @@ void cmd::generateCommands(ast::Node* node, sem::scopeController & scope, cmd::C
  *
  * @Instruções
  * ALME: Reserva posições de memória (Indica declarção de variáveis)
- *
  */
 bool cmd::generateDeclarations(const ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     for(const auto nd : node->tokens) {
@@ -212,7 +206,6 @@ bool cmd::generateDeclarations(const ast::Node* node, sem::scopeController & sco
  *
  * @Observações
  * Early Return Pattern - O método não possui parâmetros.
- *
  */
 bool cmd::generateSignature(const ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     if(node->tokens.size() < 3) return true;
@@ -232,10 +225,9 @@ bool cmd::generateSignature(const ast::Node* node, sem::scopeController & scope,
  *
  * @Instruções
  * RTPR: Indica ponto de encerramento do procedimento
- *
  */
 bool cmd::generateReturn(const ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
-    getExpression(node->tokens[1]->tokens[0], scope, code);
+    generateExpression(node->tokens[1]->tokens[0], scope, code);
     auto rtpr = new cmd::Cmd("RTPR");
     code.saveCommand(rtpr);
     return true;
@@ -250,15 +242,14 @@ bool cmd::generateReturn(const ast::Node* node, sem::scopeController & scope, cm
  * @Instruções
  *      INPP: Indica ponto de inicialização do programa
  * <br> PARA: Indica ponto de encerramento do programa
- *
  */
 void cmd::generateMain(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     auto inpp = new cmd::Cmd("INPP");
     code.saveCommand(inpp);
     scope.initializeScope("main");
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::DC) generateDeclarations(nd, scope, code);
-        if(nd->type.pattern == lex::Type::pattern::CMDS) generateCommands(nd, scope, code);
+        if(nd->type.pattern == lex::pattern::DC) generateDeclarations(nd, scope, code);
+        if(nd->type.pattern == lex::pattern::CMDS) generateCommands(nd, scope, code);
     }
     auto para = new cmd::Cmd("PARA");
     code.saveCommand(para);
@@ -272,17 +263,16 @@ void cmd::generateMain(ast::Node* node, sem::scopeController & scope, cmd::Code 
  *
  * @Instruções
  * PROC: Indica chamada de procedimento
- *
  */
 void cmd::generateMethod(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     scope.initializeScope(node->tokens[0]->tokens[0]->value);
     auto proc = new cmd::Cmd("PROC", {node->tokens[0]->tokens[0]->value});
     code.saveCommand(proc);
     for(const auto nd : node->tokens) {
-        if(nd->type.pattern == lex::Type::pattern::SIGNATURE) generateSignature(nd, scope, code);
-        if(nd->type.pattern == lex::Type::pattern::DC) generateDeclarations(nd, scope, code);
-        if(nd->type.pattern == lex::Type::pattern::CMDS) generateCommands(nd, scope, code);
-        if(nd->type.pattern == lex::Type::pattern::RETURN) generateReturn(nd, scope, code);
+        if(nd->type.pattern == lex::pattern::SIGNATURE) generateSignature(nd, scope, code);
+        if(nd->type.pattern == lex::pattern::DC) generateDeclarations(nd, scope, code);
+        if(nd->type.pattern == lex::pattern::CMDS) generateCommands(nd, scope, code);
+        if(nd->type.pattern == lex::pattern::RETURN) generateReturn(nd, scope, code);
     }
 }
 
@@ -297,7 +287,6 @@ void cmd::generateMethod(ast::Node* node, sem::scopeController & scope, cmd::Cod
  * @Observações
  *      Root Size Condition - Analisa de existe declaração de método
  * <br> Signature Size Condition - Verifica se existe parâmetros
- *
  */
 bool cmd::generate(const ast::Node* root) {
     sem::scopeController scope;
