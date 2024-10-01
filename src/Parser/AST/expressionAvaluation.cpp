@@ -16,8 +16,10 @@ namespace exp {
     }
 
     int priority(const char nd) {
-        if (nd == '*' || nd == '/') return 2;
-        if (nd == '+' || nd == '-') return 1;
+        if (nd == '$') return 5;
+        if (nd == '*' || nd == '/') return 4;
+        if (nd == '+' || nd == '-') return 3;
+        if (nd == '(') return 2;
         return 0;
     }
 
@@ -30,40 +32,49 @@ namespace exp {
         return priority(s1[0], s2[0]);
     }
 
-    std::string pop(std::stack<std::string> &ops) {
-        const std::string op = ops.top();
-        ops.pop();
-        return op;
-    }
-
     ast::Node* pop(std::stack<ast::Node*> &nodes) {
         ast::Node *node = nodes.top();
         nodes.pop();
         return node;
     }
 
-    ast::Node* buildTree(const std::deque<ast::Node *> &entries) {
-        std::stack<ast::Node *> nodes;
-        std::stack<std::string> ops;
+    void push(std::stack<ast::Node*> & nodes, std::stack<ast::Node*> & ops) {
+        auto op = pop(ops);
+        auto node = ast::Node::pointer(op->type, op->value, op->line);
+        node->tokens.push_back(pop(nodes));
+        node->tokens.push_back(pop(nodes));
+        if(node->type.pattern == lex::pattern::OP_UN) {
+            node->tokens.pop_back();
+            node->value = lex::Type::asValue(lex::pattern::SUBTRACAO);
+        }
+        nodes.push(node);
+    }
 
-        for (const auto &nd: entries) {
-            if (isNumber(nd->value) || !isOperand(nd->value)) {
+    ast::Node* buildTree(const std::deque<ast::Node *> & entries) {
+        std::stack<ast::Node*> nodes;
+        std::stack<ast::Node*> ops;
+
+        for(const auto & nd: entries) {
+            if(nd->value == "(") {
+                ops.push(nd);
+            } else if (nd->type.pattern == lex::pattern::NUM || nd->type.pattern == lex::pattern::IDENTIFIER) {
                 nodes.push(nd);
             } else if (isOperand(nd->value)) {
-                while (!ops.empty() && priority(ops.top(), nd->value)) {
-                    auto node = ast::Node::pointer(lex::Type(lex::pattern::OPERATOR), pop(ops));
-                    node->tokens.push_back(pop(nodes));
-                    node->tokens.push_back(pop(nodes));
-                    nodes.push(node);
+                if(nd->type.pattern == lex::pattern::OP_UN) nd->value = "$";
+                if(nd->type.pattern == lex::pattern::OP_UN) nodes.push(ast::Node::pointer(lex::Type(lex::pattern::NUM), "0"));
+                while (!ops.empty() && ops.top()->value != "(" && priority(ops.top()->value, nd->value)) {
+                    push(nodes, ops);
                 }
-                ops.push(nd->value);
+                ops.push(nd);
+            } else if(nd->value == ")") {
+                while (!ops.empty() && ops.top()->value != "(") {
+                    push(nodes, ops);
+                }
+                ops.pop();
             }
         }
         while (!ops.empty()) {
-            auto node = ast::Node::pointer(lex::Type(lex::pattern::OPERATOR), pop(ops));
-            node->tokens.push_back(pop(nodes));
-            node->tokens.push_back(pop(nodes));
-            nodes.push(node);
+            push(nodes, ops);
         }
         return nodes.top();
     }

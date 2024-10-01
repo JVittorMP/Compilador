@@ -67,10 +67,15 @@ void cmd::generateExpression(ast::Node* node, sem::scopeController & scope, cmd:
         code.saveCommand(crvl);
         return;
     }
-    generateExpression(node->tokens[1], scope, code);
+    if(node->type.pattern != lex::pattern::OP_UN) generateExpression(node->tokens[1], scope, code);
     generateExpression(node->tokens[0], scope, code);
-    auto opr = new cmd::Cmd(getOperatorCmd(node->value));
-    code.saveCommand(opr);
+    if(node->type.pattern == lex::pattern::OPERATOR) {
+        auto opr = new cmd::Cmd(getOperatorCmd(node->value));
+        code.saveCommand(opr);
+    } else {
+        auto op_un = new cmd::Cmd("INVE");
+        code.saveCommand(op_un);
+    }
 }
 
 /**
@@ -112,65 +117,69 @@ void cmd::generateCondition(ast::Node* node, sem::scopeController & scope, cmd::
  */
 void cmd::generateCommands(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     for(auto nd : node->tokens) {
-        auto cur = nd->tokens[0];
-        if(cur->value == "System.out.println") {
-            generateExpression(nd->tokens[1]->tokens[0], scope, code);
-            auto impr = new cmd::Cmd("IMPR");
-            code.saveCommand(impr);
-        } else if(cur->value == "=") {
-            if(cur->tokens[1]->type.pattern == lex::pattern::INPUT) {
-                auto leit = new cmd::Cmd("LEIT");
-                code.saveCommand(leit);
-            } else {
-                generateExpression(cur->tokens[1]->tokens[0], scope, code);
+        if(nd->type == lex::Type(lex::pattern::DC)) {
+            generateDeclarations(nd, scope, code);
+        } else {
+            auto cur = nd->tokens[0];
+            if(cur->value == "System.out.println") {
+                generateExpression(nd->tokens[1]->tokens[0], scope, code);
+                auto impr = new cmd::Cmd("IMPR");
+                code.saveCommand(impr);
+            } else if(cur->value == "=") {
+                if(cur->tokens[1]->type.pattern == lex::pattern::INPUT) {
+                    auto leit = new cmd::Cmd("LEIT");
+                    code.saveCommand(leit);
+                } else {
+                    generateExpression(cur->tokens[1]->tokens[0], scope, code);
+                }
+                auto armz = new cmd::Cmd("ARMZ", {cur->tokens[0]->value});
+                code.saveCommand(armz);
+            } else if(cur->value == "if") {
+                // Para aumentar os passos dos elses para cada if
+                code.ifsc += nd->tokens.size() > 3;
+                auto cond = nd->tokens[1];
+                auto cmds = nd->tokens[2];
+                generateCondition(cond, scope, code);
+                generateCommands(cmds, scope, code);
+
+                // Não tem else
+                if(nd->tokens.size() > 3) {
+                    code.ifsc--;
+                    auto dsvf = new cmd::Cmd("DSVI");
+                    code.saveCommand(dsvf);
+                    code.endJump();
+                    code.initializeJump(dsvf);
+                    generateCommands(nd->tokens[3]->tokens[1], scope, code);
+                    code.endJump();
+                } else {
+                    code.endJump();
+                }
+
+            } else if(cur->value == "while") {
+                unsigned retorno = code.getLine();
+                auto cond = nd->tokens[1];
+                auto cmds = nd->tokens[2];
+                generateCondition(cond, scope, code);
+                generateCommands(cmds, scope, code);
+
+                // Indicar endereço do início do while
+                auto dsvi = new cmd::Cmd("DSVI", {std::to_string(retorno)});
+                code.saveCommand(dsvi);
+                code.endJump();
+            } else if(cur->type.pattern == lex::pattern::IDENTIFIER) {
+                auto pusher = new cmd::Cmd("PSHR");
+                code.saveCommand(pusher);
+                code.initializeJump(pusher);
+                auto v = nd->tokens[1]->tokens;
+                std::for_each(v.rbegin(), v.rend(), [&code](ast::Node* id){
+                    auto param = new cmd::Cmd("PRMT", {id->value});
+                    code.saveCommand(param);
+                });
+
+                auto chpr = new cmd::Cmd("CHPR", {"1"});
+                code.saveCommand(chpr);
+                code.endJump();
             }
-            auto armz = new cmd::Cmd("ARMZ", {cur->tokens[0]->value});
-            code.saveCommand(armz);
-        } else if(cur->value == "if") {
-            // Para aumentar os passos dos elses para cada if
-            code.ifsc += nd->tokens.size() > 3;
-            auto cond = nd->tokens[1];
-            auto cmds = nd->tokens[2];
-            generateCondition(cond, scope, code);
-            generateCommands(cmds, scope, code);
-
-            // Não tem else
-            if(nd->tokens.size() > 3) {
-                code.ifsc--;
-                auto dsvf = new cmd::Cmd("DSVI");
-                code.saveCommand(dsvf);
-                code.endJump();
-                code.initializeJump(dsvf);
-                generateCommands(nd->tokens[3]->tokens[1], scope, code);
-                code.endJump();
-            } else {
-                code.endJump();
-            }
-
-        } else if(cur->value == "while") {
-            unsigned retorno = code.getLine();
-            auto cond = nd->tokens[1];
-            auto cmds = nd->tokens[2];
-            generateCondition(cond, scope, code);
-            generateCommands(cmds, scope, code);
-
-            // Indicar endereço do início do while
-            auto dsvi = new cmd::Cmd("DSVI", {std::to_string(retorno)});
-            code.saveCommand(dsvi);
-            code.endJump();
-        } else if(cur->type.pattern == lex::pattern::IDENTIFIER) {
-            auto pusher = new cmd::Cmd("PSHR");
-            code.saveCommand(pusher);
-            code.initializeJump(pusher);
-            auto v = nd->tokens[1]->tokens;
-            std::for_each(v.rbegin(), v.rend(), [&code](ast::Node* id){
-                auto param = new cmd::Cmd("PRMT", {id->value});
-                code.saveCommand(param);
-            });
-
-            auto chpr = new cmd::Cmd("CHPR", {"1"});
-            code.saveCommand(chpr);
-            code.endJump();
         }
     }
 }

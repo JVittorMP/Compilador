@@ -31,6 +31,7 @@ namespace cmd {
         RTPR,
         PRMT,
         PSHR,
+        INVE,
         ERRO
     };
 
@@ -61,6 +62,7 @@ namespace cmd {
         if(s == "RTPR") return cmd::command::RTPR;
         if(s == "PRMT") return cmd::command::PRMT;
         if(s == "PSHR") return cmd::command::PSHR;
+        if(s == "INVE") return cmd::command::INVE;
         return command::ERRO;
     }
 
@@ -69,6 +71,7 @@ namespace cmd {
         std::string cmd;
         std::deque<std::string> args;
 
+        Cmd() {};
         explicit Cmd(std::string cmd): cmd(std::move(cmd)) {};
         Cmd(std::string cmd, std::deque<std::string> args): cmd(std::move(cmd)), args(std::move(args)) {}
 
@@ -99,7 +102,7 @@ namespace cmd {
         std::deque<Cmd*> dsv;
 
         void endJump() {
-            dsv.back()->args.push_back(std::to_string(line/*ifsc*/));
+            dsv.back()->args.push_back(std::to_string(line));
             dsv.pop_back();
         }
 

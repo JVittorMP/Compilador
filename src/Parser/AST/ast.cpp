@@ -46,7 +46,7 @@ void ast::getDeclarations(std::deque<ast::Node*> & dc, const ast::Node* cur) {
 void ast::getCmds(std::deque<ast::Node*> & cmds, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto & n : cur->tokens) {
-        if(n->type.pattern == lex::pattern::CMD || n->type.pattern == lex::pattern::CONDITIONAL_CMD) {
+        if(n->type.pattern == lex::pattern::CMD || n->type.pattern == lex::pattern::CONDITIONAL_CMD || n->type.pattern == lex::pattern::DC) {
             if(n->tokens[0]->value == lex::Type::asValue(lex::pattern::OUTPUT)) {
                 std::deque<ast::Node*> subs;
                 for(auto nd : n->tokens) {
@@ -58,7 +58,6 @@ void ast::getCmds(std::deque<ast::Node*> & cmds, const ast::Node* cur) {
         } else {
             getCmds(cmds, n);
         }
-
     }
 }
 
@@ -75,12 +74,10 @@ void ast::avaluateNegNum(ast::Node* & cur) {
     if(cur->tokens.empty()) return;
     for(auto & nd : cur->tokens) {
         if(nd->type.pattern == lex::pattern::TERMO) {
-            if(nd->tokens[0]->type.pattern == lex::pattern::OP_UN) {
-                std::string s = "-" + nd->tokens[1]->tokens[0]->value;
-                nd->tokens[1]->tokens[0]->value = s;
-                nd->tokens.pop_front();
+            auto temp = nd->tokens[0];
+            if(temp->type.pattern == lex::pattern::OP_UN) {
+                nd->tokens[0] = ast::Node::pointer(lex::Type(lex::pattern::OP_UN), lex::Type::asValue(lex::pattern::SUBTRACAO), temp->line);
             }
-            nd->tokens[0] = nd->tokens[0]->tokens[0];
         }
         avaluateNegNum(nd);
     }
@@ -124,7 +121,7 @@ void ast::orderAtribution(ast::Node* & node) {
 
     if(ex->type.pattern != lex::pattern::INPUT) ex = changeExpressionNode(ex);
 
-    auto novo = ast::Node::pointer(op->type, op->value);
+    auto novo = ast::Node::pointer(op->type, op->value, op->line);
     novo->tokens.push_back(id);
     novo->tokens.push_back(ex);
 
@@ -142,7 +139,9 @@ void ast::orderAtribution(ast::Node* & node) {
  */
 void ast::simplifyExpression(const ast::Node* node, std::deque<ast::Node*> & exp) {
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::pattern::NUM || nd->type.pattern == lex::pattern::OPERATOR || nd->type.pattern == lex::pattern::IDENTIFIER) exp.push_back(nd);
+        if(nd->type.pattern == lex::pattern::NUM || nd->type.pattern == lex::pattern::OPERATOR ||
+           nd->type.pattern == lex::pattern::IDENTIFIER || nd->type.pattern == lex::pattern::PUNCTUATION ||
+           nd->type.pattern == lex::pattern::OP_UN) exp.push_back(nd);
         simplifyExpression(nd, exp);
     }
 }
@@ -330,6 +329,25 @@ void ast::compressStructure(ast::Node* & node) {
     if(node->type.pattern == lex::pattern::CMDS) filterCmds(node);
 }
 
+void eraseEmptyProductionsOnExpressionNode(ast::Node* & node) {
+    for(int i = 0; i < size(node->tokens); i++) {
+        ast::Node* n = node->tokens[i];
+//        if(n->type.pattern == lex::pattern::PUNCTUATION) {
+//            if(n->value == lex::Type::asValue(lex::pattern::LPARENTESE) ||
+//               n->value == lex::Type::asValue(lex::pattern::RPARENTESE))
+//               continue;
+//            node->tokens.erase(node->tokens.begin() + i--);
+//            continue;
+//        }
+        if(n->tokens.empty()) continue;
+        if(n->tokens[0]->type.pattern == lex::pattern::VAZIO) {
+            node->tokens.erase(node->tokens.begin() + i--);
+            continue;
+        }
+        eraseEmptyProductionsOnExpressionNode(n);
+    }
+}
+
 /**
  * @def
  * Percorre a estrutura da árvore recursivamente, identificando
@@ -341,6 +359,10 @@ void ast::compressStructure(ast::Node* & node) {
 void ast::eraseEmptyProductions(ast::Node* & node) {
     for(int i = 0; i < size(node->tokens); i++) {
         ast::Node* n = node->tokens[i];
+        if(n->type.pattern == lex::pattern::EXPRESSAO) {
+            eraseEmptyProductionsOnExpressionNode(n);
+            continue;
+        }
         if(n->type.pattern == lex::pattern::PUNCTUATION) {
             node->tokens.erase(node->tokens.begin() + i--);
             continue;
@@ -412,6 +434,7 @@ ast::Node* ast::filter(ast::Node* & root) {
 
     removeInit(root);
     compress(root);
-    sin::explore(root);
+    std::ofstream file("../Documentos/Code/ast.txt");
+    sin::explore(file, root);
     return root;
 }

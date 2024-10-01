@@ -98,7 +98,7 @@ namespace cmd {
 }
 
 namespace exec {
-    void interpret(exec::Interpreter interpreter);
+    void interpret(exec::Interpreter & interpreter);
 }
 
 #endif

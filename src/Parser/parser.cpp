@@ -148,7 +148,6 @@ int sin::INIT(ast::Node* node, cursor & cursor) {
     lexemas.emplace_back(lex::Type(lex::pattern::LPARENTESE));
     lexemas.emplace_back(lex::Type(lex::pattern::RPARENTESE));
     lexemas.emplace_back(lex::Type(lex::pattern::LCHAVE));
-    lexemas.emplace_back(lex::Type(lex::pattern::DC));
     lexemas.emplace_back(lex::Type(lex::pattern::CMDS));
     lexemas.emplace_back(lex::Type(lex::pattern::RCHAVE));
     if(isProductionValid(node, cursor, lexemas)) return SUCCESS;
@@ -165,7 +164,6 @@ int sin::METODO(ast::Node* node, cursor & cursor) {
     lexemas.emplace_back(lex::Type(lex::pattern::PARAMS));
     lexemas.emplace_back(lex::Type(lex::pattern::RPARENTESE));
     lexemas.emplace_back(lex::Type(lex::pattern::LCHAVE));
-    lexemas.emplace_back(lex::Type(lex::pattern::DC));
     lexemas.emplace_back(lex::Type(lex::pattern::CMDS));
     lexemas.emplace_back(lex::Type(lex::pattern::RETURN));
     lexemas.emplace_back(lex::Type(lex::pattern::EXPRESSAO));
@@ -271,6 +269,9 @@ int sin::CMDS(ast::Node* node, cursor & cursor) {
         lexemas.emplace_back(lex::Type(lex::pattern::CMDS));
     } else if(cursor.token().value == lex::Type::asValue(lex::pattern::IF) || cursor.token().value == lex::Type::asValue(lex::pattern::WHILE)) {
         lexemas.emplace_back(lex::Type(lex::pattern::CONDITIONAL_CMD));
+        lexemas.emplace_back(lex::Type(lex::pattern::CMDS));
+    } else if(cursor.token().value == lex::Type::asValue(lex::pattern::DOUBLE)) {
+        lexemas.emplace_back(lex::Type(lex::pattern::DC));
         lexemas.emplace_back(lex::Type(lex::pattern::CMDS));
     } else {
         node->tokens.push_back(ast::Node::pointer(lex::Type{lex::pattern::VAZIO}));
@@ -463,6 +464,7 @@ int sin::OP_UN(ast::Node* node, cursor & cursor) {
     if(cursor.token().value == lex::Type::asValue(lex::pattern::SUBTRACAO)) {
         node->tokens.push_back(ast::Node::pointer(cursor.token()));
         cursor.next();
+        return SUCCESS;
     }
     node->tokens.push_back(ast::Node::pointer(lex::Type{lex::pattern::VAZIO}));
     return SUCCESS;
@@ -473,6 +475,12 @@ int sin::FATOR(ast::Node* node, cursor & cursor) {
         node->tokens.push_back(ast::Node::pointer(cursor.token()));
         cursor.next();
         return SUCCESS;
+    } else if(cursor.token().value == lex::Type::asValue(lex::pattern::LPARENTESE)) {
+        std::deque<lex::token> lexemas;
+        lexemas.emplace_back(lex::Type(lex::pattern::LPARENTESE));
+        lexemas.emplace_back(lex::Type(lex::pattern::EXPRESSAO));
+        lexemas.emplace_back(lex::Type(lex::pattern::RPARENTESE));
+        if(isProductionValid(node, cursor, lexemas)) return SUCCESS;
     }
     return FAIL;
 }
@@ -530,5 +538,7 @@ ast::Node* sin::parse(cursor & cursor) {
         const std::string msg = std::format("On Line {}: After [{}] Declaration!", token.linha, token.value);
         throw compiler::Exception(compiler::Exception::type::SYNTACTIC, msg);
     }
+    std::ofstream file("../Documentos/Code/cst.txt");
+    explore(file, root);
     return root;
 }

@@ -6,7 +6,7 @@
  * do código-objeto, associando uma série de passos a cada
  * instrução obtida.
  */
-void exec::interpret(exec::Interpreter interpreter) {
+void exec::interpret(exec::Interpreter & interpreter) {
     unsigned i = interpreter.cursor;
     bool flag = true, jump = false;
     while(flag) {
@@ -113,6 +113,11 @@ void exec::interpret(exec::Interpreter interpreter) {
                 interpreter.dados.push(f / s);
                 break;
             }
+            case cmd::command::INVE: {
+                const double top = interpreter.popStack();
+                interpreter.dados.push(-top);
+                break;
+            }
             case cmd::command::INPP:
                 interpreter.scope.initializeScope("main");
                 break;
@@ -147,7 +152,7 @@ void exec::interpret(exec::Interpreter interpreter) {
 
 int main() {
     try {
-        const exec::Interpreter interpreter("../Documentos/code/code.txt");
+        exec::Interpreter interpreter("../Documentos/code/code.txt");
         exec::interpret(interpreter);
     } catch(compiler::Exception & e) {
         std::cerr << e.what() << std::endl;

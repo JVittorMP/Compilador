@@ -36,20 +36,28 @@ namespace sin {
     void exploreRecursion(std::ofstream & file, const ast::Node* node, const int i = 0) {
         for(int j = 0; j < size(node->tokens); j++) {
             const auto n = node->tokens[j];
-            file << std::format("{}{}[({}:{}):{}, {}]", '\n', tab(i), i, j, n->type.asString(), n->value);
-            // file << std::endl << tab(i) << "[(" << std::to_string(i) << ":" << std::to_string(j) << "):" << n->type.asString() << ", " << n->value << "]";
+            file << std::format("{}{}[({}:{}):{}, {}]", '\n', tab(i), i, j, n->type.asString(), n->value, n->line);
             exploreRecursion(file, n, i + 1);
         }
     }
 
-    void explore(ast::Node* node, const int i = 0) {
-        std::ofstream file("../Documentos/Code/ast.txt");
-        if(!file) {
-            std::cout << "Falhou!" << std::endl;
-        }
-        file << std::format("{}[(0:0):{}, {}]", tab(i), node->type.asString(), node->value);
-        // file << tab(i) << "[(0:0):" << node->type.asString() << ", " << node->value << "]";
+    void explore(std::ofstream & file, ast::Node* node, const int i = 0) {
+        file << std::format("{}[(0:0):{}, {}]", tab(i), node->type.asString(), node->value, node->line);
         exploreRecursion(file, node, i + 1);
+    }
+
+    void outputRecursion(const ast::Node* node, const int i = 0) {
+        for(int j = 0; j < size(node->tokens); j++) {
+            const auto n = node->tokens[j];
+            std::cout << std::format("{}{}[({}:{}):{}, {}]", '\n', tab(i), i, j, n->type.asString(), n->value, n->line);
+            outputRecursion(n, i + 1);
+        }
+    }
+
+    void output(ast::Node* node, const int i = 0) {
+        std::cout << std::endl << std::endl <<  std::format("{}[(0:0):{}, {}]", tab(i), node->type.asString(), node->value, node->line);
+        outputRecursion(node, i + 1);
+        std::cout.flush();
     }
 }
 

@@ -1,6 +1,6 @@
 PROG	            public      public class id { <INIT> <METODO> }
-INIT                public      public static void main () { <DC> <CMDS> }
-METODO [$]	        public      public static <TIPO> id ( <PARAMS> )  { <DC> <CMDS> return <EXPRESSAO> ; }
+INIT                public      public static void main () { <CMDS> }
+METODO [$]	        public      public static <TIPO> id ( <PARAMS> )  { <CMDS> return <EXPRESSAO> ; }
 PARAMS [$]	        double      <TIPO> id<MAIS_PARAMS>
 MAIS_PARAMS [$] 	,           , <PARAMS>
 DC [$]	            double      <VAR> <MAIS_DC>
@@ -13,9 +13,10 @@ CMDS [$]	        if          <CONDITIONAL_CMD><CMDS>
 	                while
 	                System      <CMD>;<CMDS>
 	                <id>
+	                double      <DC><CMDS>
 CONDITIONAL_CMD     if          if ( <CONDICAO> )  { <CMDS> } <PFALSA>
                     while       while ( <CONDICAO> )  { <CMDS> }
-CMD                 System      System.out.println (<EXPRESSAO>)
+CMD                 System      System.out.println ( <EXPRESSAO> )
                     <id>        id <RESTO_IDENT>
 PFALSA [$]	        else        else { <CMDS> }
 RESTO_IDENT	        =           = <EXP_IDENT>
@@ -28,6 +29,7 @@ EXP_IDENT	        -           <EXPRESSAO>
                     <num>
                     (
                     <input>     lerDouble()
+                    <id>        id(<LISTA_ARG>)
 CONDICAO	        -           <EXPRESSAO> <RELACAO> <EXPRESSAO>
                     <id>
                     <num>

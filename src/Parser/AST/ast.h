@@ -13,7 +13,15 @@ namespace ast {
         Node() = default;
         explicit Node(lex::Type type): type(type), value(type.asValue()) {}
         explicit Node(const lex::token& t): type(t.type), value(t.value), line(t.linha) {}
-        Node(const lex::Type type, std::string value): type(type), value(std::move(value)) {}
+        Node(const lex::Type type, std::string value):
+                type(type), value(std::move(value)) {}
+        Node(const lex::Type type, std::string value, unsigned line):
+            type(type), value(std::move(value)), line(line) {}
+
+
+        static Node* pointer(const lex::Type type, std::string value, unsigned line) {
+            return new Node(type, std::move(value), line);
+        }
 
         static Node* pointer(const lex::Type type, std::string value) {
             return new Node(type, std::move(value));
