@@ -7,18 +7,18 @@ namespace compiler {
 
     class Exception final : public std::exception {
     public:
-        enum class type {
+        enum class model {
             LEXICAL,
             SYNTACTIC,
             SEMANTIC,
             RUNTIME
         };
 
-        static inline std::string toString(const type except) {
-            if(except == type::LEXICAL) return "Lexical Exception";
-            if(except == type::SYNTACTIC) return "Syntatic Exception";
-            if(except == type::SEMANTIC) return "Semantic Exception";
-            if(except == type::RUNTIME) return "Runtime Exception";
+        static inline std::string toString(const model except) {
+            if(except == model::LEXICAL) return "Lexical Exception";
+            if(except == model::SYNTACTIC) return "Syntatic Exception";
+            if(except == model::SEMANTIC) return "Semantic Exception";
+            if(except == model::RUNTIME) return "Runtime Exception";
             return "Unknown Exception Type";
         }
 
@@ -26,7 +26,7 @@ namespace compiler {
         std::string message;
 
     public:
-        explicit Exception(const compiler::Exception::type exception, std::string msg): message(toString(exception) + ": " + std::move(msg)) {}
+        explicit Exception(const compiler::Exception::model exception, std::string msg): message(toString(exception) + ": " + std::move(msg)) {}
 
         const char* what() const noexcept override {
             return message.c_str();

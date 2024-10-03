@@ -13,7 +13,7 @@
  * <br> CPMI: Comparação Menor Inclusivo
  * <br> CMAI: Comparação Maior Inclusivo
  */
-std::string cmd::getComparisonCmd(const std::string& s) {
+std::string cmd::getComparisonCmd(const std::string & s) {
     if(s == "<") return "CPME";
     if(s == ">") return "CPMA";
     if(s == "!=") return "CDES";
@@ -52,24 +52,25 @@ std::string cmd::getOperatorCmd(const std::string& s) {
  * @Instruções
  *      CRCT: Indica o carregamento de uma constante ao topo da pilha
  * <br> CRVL: Indica o carregamento de uma variável ao topo da pilha
+ * <br> INVE: Inverte o valor do topo da pilha
  *
  * @Observações
  * Early Return Pattern - O método não possui parâmetros.
  */
 void cmd::generateExpression(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
-    if(node->type.pattern == lex::pattern::NUM) {
+    if(node->pattern == lex::pattern::NUM) {
         auto crct = new cmd::Cmd("CRCT", {node->value});
         code.saveCommand(crct);
         return;
     }
-    if(node->type.pattern == lex::pattern::IDENTIFIER) {
+    if(node->pattern == lex::pattern::IDENTIFIER) {
         auto crvl = new cmd::Cmd("CRVL", {node->value});
         code.saveCommand(crvl);
         return;
     }
-    if(node->type.pattern != lex::pattern::OP_UN) generateExpression(node->tokens[1], scope, code);
+    if(node->pattern != lex::pattern::OP_UN) generateExpression(node->tokens[1], scope, code);
     generateExpression(node->tokens[0], scope, code);
-    if(node->type.pattern == lex::pattern::OPERATOR) {
+    if(node->pattern == lex::pattern::OPERATOR) {
         auto opr = new cmd::Cmd(getOperatorCmd(node->value));
         code.saveCommand(opr);
     } else {
@@ -117,16 +118,16 @@ void cmd::generateCondition(ast::Node* node, sem::scopeController & scope, cmd::
  */
 void cmd::generateCommands(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
     for(auto nd : node->tokens) {
-        if(nd->type == lex::Type(lex::pattern::DC)) {
+        if(nd->pattern == lex::pattern::DC) {
             generateDeclarations(nd, scope, code);
         } else {
             auto cur = nd->tokens[0];
-            if(cur->value == "System.out.println") {
+            if(cur->value == lex::value(lex::pattern::OUTPUT)) {
                 generateExpression(nd->tokens[1]->tokens[0], scope, code);
                 auto impr = new cmd::Cmd("IMPR");
                 code.saveCommand(impr);
             } else if(cur->value == "=") {
-                if(cur->tokens[1]->type.pattern == lex::pattern::INPUT) {
+                if(cur->tokens[1]->pattern == lex::pattern::INPUT) {
                     auto leit = new cmd::Cmd("LEIT");
                     code.saveCommand(leit);
                 } else {
@@ -166,7 +167,7 @@ void cmd::generateCommands(ast::Node* node, sem::scopeController & scope, cmd::C
                 auto dsvi = new cmd::Cmd("DSVI", {std::to_string(retorno)});
                 code.saveCommand(dsvi);
                 code.endJump();
-            } else if(cur->type.pattern == lex::pattern::IDENTIFIER) {
+            } else if(cur->pattern == lex::pattern::IDENTIFIER) {
                 auto pusher = new cmd::Cmd("PSHR");
                 code.saveCommand(pusher);
                 code.initializeJump(pusher);
@@ -257,8 +258,8 @@ void cmd::generateMain(ast::Node* node, sem::scopeController & scope, cmd::Code 
     code.saveCommand(inpp);
     scope.initializeScope("main");
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::pattern::DC) generateDeclarations(nd, scope, code);
-        if(nd->type.pattern == lex::pattern::CMDS) generateCommands(nd, scope, code);
+        if(nd->pattern == lex::pattern::DC) generateDeclarations(nd, scope, code);
+        if(nd->pattern == lex::pattern::CMDS) generateCommands(nd, scope, code);
     }
     auto para = new cmd::Cmd("PARA");
     code.saveCommand(para);
@@ -274,14 +275,15 @@ void cmd::generateMain(ast::Node* node, sem::scopeController & scope, cmd::Code 
  * PROC: Indica chamada de procedimento
  */
 void cmd::generateMethod(ast::Node* node, sem::scopeController & scope, cmd::Code & code) {
-    scope.initializeScope(node->tokens[0]->tokens[0]->value);
-    auto proc = new cmd::Cmd("PROC", {node->tokens[0]->tokens[0]->value});
+    const auto method = node->tokens[0]->tokens[0]->value;
+    scope.initializeScope(method);
+    auto proc = new cmd::Cmd("PROC", {method});
     code.saveCommand(proc);
     for(const auto nd : node->tokens) {
-        if(nd->type.pattern == lex::pattern::SIGNATURE) generateSignature(nd, scope, code);
-        if(nd->type.pattern == lex::pattern::DC) generateDeclarations(nd, scope, code);
-        if(nd->type.pattern == lex::pattern::CMDS) generateCommands(nd, scope, code);
-        if(nd->type.pattern == lex::pattern::RETURN) generateReturn(nd, scope, code);
+        if(nd->pattern == lex::pattern::SIGNATURE) generateSignature(nd, scope, code);
+        if(nd->pattern == lex::pattern::DC) generateDeclarations(nd, scope, code);
+        if(nd->pattern == lex::pattern::CMDS) generateCommands(nd, scope, code);
+        if(nd->pattern == lex::pattern::RETURN) generateReturn(nd, scope, code);
     }
 }
 

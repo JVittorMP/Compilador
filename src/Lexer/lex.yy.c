@@ -834,32 +834,32 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 YY_RULE_SETUP
 #line 31 "lexer.l"
-{ tokens.push_back({lex::Type("Keyword"), yytext, line}); }
+{ tokens.push_back({lex::enumeration("Keyword"), yytext, line}); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
 #line 32 "lexer.l"
-{ tokens.push_back({lex::Type("Input"), yytext, line}); }
+{ tokens.push_back({lex::enumeration("Input"), yytext, line}); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
 #line 33 "lexer.l"
-{ tokens.push_back({lex::Type("Identifier"), yytext, line}); }
+{ tokens.push_back({lex::enumeration("Identifier"), yytext, line}); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
 #line 34 "lexer.l"
-{ tokens.push_back({lex::Type("Num"), yytext, line}); }
+{ tokens.push_back({lex::enumeration("Num"), yytext, line}); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
 #line 35 "lexer.l"
-{ tokens.push_back({lex::Type("Operator"), yytext, line}); }
+{ tokens.push_back({lex::enumeration("Operator"), yytext, line}); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
 #line 36 "lexer.l"
-{ tokens.push_back({lex::Type("Punctuation"), yytext, line}); }
+{ tokens.push_back({lex::enumeration("Punctuation"), yytext, line}); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
@@ -874,13 +874,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 #line 39 "lexer.l"
-{ tokens.push_back({lex::Type("End"), "$", line}); return 0;}
+{ tokens.push_back({lex::enumeration("End"), "$", line}); return 0;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
 #line 40 "lexer.l"
-{ tokens.push_back({lex::Type("ERROR"), "Invalid Input on Line " + std::to_string(line) + ": " + yytext, line}); }
-//{ printf("[Invalid Input (Lexical Error) on Line %d, %s]\n", line, yytext);}
+{ tokens.push_back({lex::enumeration("ERROR"), "Invalid Input on Line " + std::to_string(line) + ": " + yytext, line}); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP

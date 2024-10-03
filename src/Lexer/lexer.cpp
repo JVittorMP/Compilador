@@ -10,14 +10,14 @@ std::deque<lex::token> lex::scan(const std::string &input) {
     yyin = fopen(input.data(), "r");
 
     if(!yyin) {
-        throw compiler::Exception(compiler::Exception::type::RUNTIME, std::format("File '{}' Not Found", input));
+        throw compiler::Exception(compiler::Exception::model::RUNTIME, std::format("File '{}' Not Found", input));
     }
 
     std::deque<lex::token> tokens;
     ::scan(tokens);
     for(const auto& tk : tokens) {
-        if(tk.type.pattern != pattern::ERROR) continue;
-        throw compiler::Exception(compiler::Exception::type::LEXICAL, tk.value);
+        if(tk.type != lex::pattern::ERROR) continue;
+        throw compiler::Exception(compiler::Exception::model::LEXICAL, tk.value);
     }
     std::cout << "Lexical Analysis Concluded!" << std::endl;
     return tokens;

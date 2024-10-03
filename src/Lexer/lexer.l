@@ -28,12 +28,12 @@ Input          (lerDouble\(\))
 /*** rules for inputs ***/
 %%
 
-{Keyword}		    { tokens.push_back({lex::Type("Keyword"), yytext, line}); }
-{Input}             { tokens.push_back({lex::Type("Input"), yytext, line}); }
-{Identifier}		{ tokens.push_back({lex::Type("Identifier"), yytext, line}); }
-{Num}			    { tokens.push_back({lex::Type("Num"), yytext, line}); }
-{Operator}		    { tokens.push_back({lex::Type("Operator"), yytext, line}); }
-{Punctuation}		{ tokens.push_back({lex::Type("Punctuation"), yytext, line}); }
+{Keyword}		    { tokens.push_back({lex::type("Keyword"), yytext, line}); }
+{Input}             { tokens.push_back({lex::type("Input"), yytext, line}); }
+{Identifier}		{ tokens.push_back({lex::type("Identifier"), yytext, line}); }
+{Num}			    { tokens.push_back({lex::type("Num"), yytext, line}); }
+{Operator}		    { tokens.push_back({lex::type("Operator"), yytext, line}); }
+{Punctuation}		{ tokens.push_back({lex::type("Punctuation"), yytext, line}); }
 {Whitespace}		{ /* Whitespace Ignored */ }
 \n                  { line++;}
 <<EOF>>             { tokens.push_back({lex::Type("End"), "$", line}); return 0;}

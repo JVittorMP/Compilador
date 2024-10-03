@@ -1,4 +1,4 @@
-#include "expressionAvaluation.cpp"
+#include "expTree.cpp"
 
 /**
  * @def
@@ -9,7 +9,7 @@
 void ast::getVars(std::deque<ast::Node*> & v, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto n : cur->tokens) {
-        if(n->type.pattern == lex::pattern::IDENTIFIER) v.push_back(n);
+        if(n->pattern == lex::pattern::IDENTIFIER) v.push_back(n);
         getVars(v, n);
     }
 }
@@ -24,12 +24,12 @@ void ast::getVars(std::deque<ast::Node*> & v, const ast::Node* cur) {
 void ast::getDeclarations(std::deque<ast::Node*> & dc, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto n : cur->tokens) {
-        if(n->type.pattern != lex::pattern::VAR) {
+        if(n->pattern != lex::pattern::VAR) {
             getDeclarations(dc, n);
             continue;
         }
         for(const auto b : n->tokens) {
-            if(b->type.pattern != lex::pattern::VARS) continue;
+            if(b->pattern != lex::pattern::VARS) continue;
             std::deque<ast::Node*> vars;
             getVars(vars, b);
             b->tokens = vars;
@@ -46,11 +46,11 @@ void ast::getDeclarations(std::deque<ast::Node*> & dc, const ast::Node* cur) {
 void ast::getCmds(std::deque<ast::Node*> & cmds, const ast::Node* cur) {
     if(cur->tokens.empty()) return;
     for(auto & n : cur->tokens) {
-        if(n->type.pattern == lex::pattern::CMD || n->type.pattern == lex::pattern::CONDITIONAL_CMD || n->type.pattern == lex::pattern::DC) {
-            if(n->tokens[0]->value == lex::Type::asValue(lex::pattern::OUTPUT)) {
+        if(n->pattern == lex::pattern::CMD || n->pattern == lex::pattern::CONDITIONAL_CMD || n->pattern == lex::pattern::DC) {
+            if(n->tokens[0]->value == lex::value(lex::pattern::OUTPUT)) {
                 std::deque<ast::Node*> subs;
                 for(auto nd : n->tokens) {
-                    if(!nd->type.status() || nd->value == lex::Type::asValue(lex::pattern::OUTPUT)) subs.push_back(nd);
+                    if(!lex::terminal(nd->pattern) || nd->value == lex::value(lex::pattern::OUTPUT)) subs.push_back(nd);
                 }
                 n->tokens = subs;
             }
@@ -70,16 +70,16 @@ void ast::getCmds(std::deque<ast::Node*> & cmds, const ast::Node* cur) {
  * @param cur
  * Raíz de uma árvore que representa uma expressão aritmética.
  */
-void ast::avaluateNegNum(ast::Node* & cur) {
+void ast::evaluateNegNum(ast::Node* & cur) {
     if(cur->tokens.empty()) return;
     for(auto & nd : cur->tokens) {
-        if(nd->type.pattern == lex::pattern::TERMO) {
+        if(nd->pattern == lex::pattern::TERMO) {
             auto temp = nd->tokens[0];
-            if(temp->type.pattern == lex::pattern::OP_UN) {
-                nd->tokens[0] = ast::Node::pointer(lex::Type(lex::pattern::OP_UN), lex::Type::asValue(lex::pattern::SUBTRACAO), temp->line);
+            if(temp->pattern == lex::pattern::OP_UN) {
+                nd->tokens[0] = ast::Node::pointer(lex::pattern::OP_UN, lex::value(lex::pattern::SUBTRACAO), temp->line);
             }
         }
-        avaluateNegNum(nd);
+        evaluateNegNum(nd);
     }
 }
 
@@ -97,7 +97,7 @@ void ast::avaluateNegNum(ast::Node* & cur) {
  */
 ast::Node* ast::changeExpressionNode(ast::Node* ex) {
     std::deque<ast::Node*> v;
-    avaluateNegNum(ex);
+    evaluateNegNum(ex);
     ast::Node* exCpy = ex;
     simplifyExpression(exCpy, v);
     exCpy = exp::buildTree(v);
@@ -119,9 +119,9 @@ void ast::orderAtribution(ast::Node* & node) {
     ast::Node* & op = ri->tokens[0];
     ast::Node* & ex = ri->tokens[1]->tokens[0];
 
-    if(ex->type.pattern != lex::pattern::INPUT) ex = changeExpressionNode(ex);
+    if(ex->pattern != lex::pattern::INPUT) ex = changeExpressionNode(ex);
 
-    auto novo = ast::Node::pointer(op->type, op->value, op->line);
+    auto novo = ast::Node::pointer(op->pattern, op->value, op->line);
     novo->tokens.push_back(id);
     novo->tokens.push_back(ex);
 
@@ -139,9 +139,8 @@ void ast::orderAtribution(ast::Node* & node) {
  */
 void ast::simplifyExpression(const ast::Node* node, std::deque<ast::Node*> & exp) {
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::pattern::NUM || nd->type.pattern == lex::pattern::OPERATOR ||
-           nd->type.pattern == lex::pattern::IDENTIFIER || nd->type.pattern == lex::pattern::PUNCTUATION ||
-           nd->type.pattern == lex::pattern::OP_UN) exp.push_back(nd);
+        auto p = nd->pattern;
+        if(p == lex::pattern::NUM || p == lex::pattern::OPERATOR || p == lex::pattern::IDENTIFIER || p == lex::pattern::PUNCTUATION || p == lex::pattern::OP_UN) exp.push_back(nd);
         simplifyExpression(nd, exp);
     }
 }
@@ -187,7 +186,7 @@ void ast::orderOutput(ast::Node* & node) {
  */
 void ast::getArguments(ast::Node* & node, std::deque<ast::Node*> & v) {
     for(auto nd : node->tokens) {
-        if(nd->type.pattern == lex::pattern::IDENTIFIER) v.push_back(nd);
+        if(nd->pattern == lex::pattern::IDENTIFIER) v.push_back(nd);
         getArguments(nd, v);
     }
 }
@@ -220,13 +219,14 @@ ast::Node* ast::orderArguments(ast::Node* & node) {
  */
 void ast::filterCmds(ast::Node* & node) {
     for(auto & n : node->tokens) {
-        ast::Node* cur = n->tokens.front();
-        if(cur->type.pattern == lex::pattern::KEYWORD) {
-            if(cur->value == lex::Type::asValue(lex::pattern::OUTPUT)) orderOutput(n);
-            if(cur->value == lex::Type::asValue(lex::pattern::IF) || cur->value == lex::Type::asValue(lex::pattern::WHILE)) orderConditionals(n);
+        auto cur = n->tokens.front();
+        auto val = cur->value;
+        if(cur->pattern == lex::pattern::KEYWORD) {
+            if(val == lex::value(lex::pattern::OUTPUT)) orderOutput(n);
+            if(val == lex::value(lex::pattern::IF) || val == lex::value(lex::pattern::WHILE)) orderConditionals(n);
         }
-        else if(cur->type.pattern == lex::pattern::IDENTIFIER) {
-            if(n->tokens[1]->tokens.front()->type.pattern == lex::pattern::OPERATOR) {
+        else if(cur->pattern == lex::pattern::IDENTIFIER) {
+            if(n->tokens[1]->tokens.front()->pattern == lex::pattern::OPERATOR) {
                 orderAtribution(n);
             } else {
                 if(!n->tokens[1]->tokens.empty()) n->tokens[1] = orderArguments(n->tokens[1]->tokens[0]->tokens[0]);
@@ -248,11 +248,11 @@ void ast::getParams(std::deque<ast::Node*> & v, ast::Node* cur) {
     if(cur->tokens.empty()) return;
     auto last = cur->tokens.back();
 
-    auto param = ast::Node::pointer(lex::Type(lex::pattern::PARAM));
+    auto param = ast::Node::pointer(lex::pattern::PARAM);
     param->tokens.push_back(cur->tokens[0]);
     param->tokens.push_back(cur->tokens[1]);
     v.push_back(param);
-    if(last->type.pattern == lex::pattern::MAIS_PARAMS) getParams(v, last->tokens.front());
+    if(last->pattern == lex::pattern::MAIS_PARAMS) getParams(v, last->tokens.front());
 }
 
 /**
@@ -291,12 +291,13 @@ void ast::compressReturn(ast::Node* & node) {
  * Nó raíz de uma subárvore que contém a estrutura de um método.
  */
 void ast::getMethod(ast::Node* node, std::deque<ast::Node*> & v) {
-    auto signature =  ast::Node::pointer(lex::Type(lex::pattern::SIGNATURE));
-    auto retorno = ast::Node::pointer(lex::Type(lex::pattern::RETURN));
+    auto signature =  ast::Node::pointer(lex::pattern::SIGNATURE);
+    auto retorno = ast::Node::pointer(lex::pattern::RETURN);
     for(auto & nd : node->tokens) {
-        if(nd->type.pattern == lex::pattern::IDENTIFIER) signature->tokens.push_front(nd);
-        if(nd->type.pattern == lex::pattern::TIPO || nd->type.pattern == lex::pattern::PARAMS) signature->tokens.push_back(nd);
-        if(nd->type.pattern == lex::pattern::DC || nd->type.pattern == lex::pattern::CMDS) v.push_back(nd);
+        auto pattern = nd->pattern;
+        if(pattern == lex::pattern::IDENTIFIER) signature->tokens.push_front(nd);
+        if(pattern == lex::pattern::TIPO || pattern == lex::pattern::PARAMS) signature->tokens.push_back(nd);
+        if(pattern == lex::pattern::DC || pattern == lex::pattern::CMDS) v.push_back(nd);
     }
     retorno->tokens.push_back(node->tokens.end()[-2]);
     retorno->tokens.push_back(node->tokens.back());
@@ -315,32 +316,25 @@ void ast::compressStructure(ast::Node* & node) {
     if(node->tokens.empty()) return;
     std::deque<ast::Node*> v;
 
-    if(node->type.pattern == lex::pattern::DC) {
+    if(node->pattern == lex::pattern::DC) {
         getDeclarations(v, node);
     }
-    else if(node->type.pattern == lex::pattern::CMDS) {
+    else if(node->pattern == lex::pattern::CMDS) {
         getCmds(v, node);
     }
-    else if(node->type.pattern == lex::pattern::METODO) {
+    else if(node->pattern == lex::pattern::METODO) {
         getMethod(node, v);
     }
 
     node->tokens = v;
-    if(node->type.pattern == lex::pattern::CMDS) filterCmds(node);
+    if(node->pattern == lex::pattern::CMDS) filterCmds(node);
 }
 
 void eraseEmptyProductionsOnExpressionNode(ast::Node* & node) {
     for(int i = 0; i < size(node->tokens); i++) {
         ast::Node* n = node->tokens[i];
-//        if(n->type.pattern == lex::pattern::PUNCTUATION) {
-//            if(n->value == lex::Type::asValue(lex::pattern::LPARENTESE) ||
-//               n->value == lex::Type::asValue(lex::pattern::RPARENTESE))
-//               continue;
-//            node->tokens.erase(node->tokens.begin() + i--);
-//            continue;
-//        }
         if(n->tokens.empty()) continue;
-        if(n->tokens[0]->type.pattern == lex::pattern::VAZIO) {
+        if(n->tokens[0]->pattern == lex::pattern::VAZIO) {
             node->tokens.erase(node->tokens.begin() + i--);
             continue;
         }
@@ -359,16 +353,16 @@ void eraseEmptyProductionsOnExpressionNode(ast::Node* & node) {
 void ast::eraseEmptyProductions(ast::Node* & node) {
     for(int i = 0; i < size(node->tokens); i++) {
         ast::Node* n = node->tokens[i];
-        if(n->type.pattern == lex::pattern::EXPRESSAO) {
+        if(n->pattern == lex::pattern::EXPRESSAO) {
             eraseEmptyProductionsOnExpressionNode(n);
             continue;
         }
-        if(n->type.pattern == lex::pattern::PUNCTUATION) {
+        if(n->pattern == lex::pattern::PUNCTUATION) {
             node->tokens.erase(node->tokens.begin() + i--);
             continue;
         }
         if(n->tokens.empty()) continue;
-        if(n->tokens[0]->type.pattern == lex::pattern::VAZIO) {
+        if(n->tokens[0]->pattern == lex::pattern::VAZIO) {
             node->tokens.erase(node->tokens.begin() + i--);
             continue;
         }
@@ -384,11 +378,11 @@ void ast::eraseEmptyProductions(ast::Node* & node) {
  * Raíz da árvore sintárica.
  */
 void ast::removeInit(ast::Node* & root) {
-    const auto init = root->tokens[1];
+    const auto init = (*root)[1];
 
     auto itInit = init->tokens.begin();
     while(itInit != init->tokens.end()) {
-        if((*itInit)->type.pattern != lex::pattern::KEYWORD) break;
+        if((*itInit)->pattern != lex::pattern::KEYWORD) break;
         init->tokens.erase(itInit);
         ++itInit;
     }
@@ -405,9 +399,9 @@ void ast::removeInit(ast::Node* & root) {
 void ast::compress(ast::Node* & node) {
     for(auto & n : node->tokens) {
         if(n->tokens.empty()) continue;
-        if(n->type.pattern == lex::pattern::DC      ||
-           n->type.pattern == lex::pattern::CMDS    ||
-           n->type.pattern == lex::pattern::METODO) {
+
+        auto pattern = n->pattern;
+        if(pattern == lex::pattern::DC || pattern == lex::pattern::CMDS || pattern == lex::pattern::METODO) {
             compressStructure(n);
         }
         compress(n);

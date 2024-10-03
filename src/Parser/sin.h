@@ -36,26 +36,26 @@ namespace sin {
     void exploreRecursion(std::ofstream & file, const ast::Node* node, const int i = 0) {
         for(int j = 0; j < size(node->tokens); j++) {
             const auto n = node->tokens[j];
-            file << std::format("{}{}[({}:{}):{}, {}]", '\n', tab(i), i, j, n->type.asString(), n->value, n->line);
+            file << std::format("{}{}[({}:{}):{}, {}]", '\n', tab(i), i, j, lex::name(n->pattern), n->value, n->line);
             exploreRecursion(file, n, i + 1);
         }
     }
 
     void explore(std::ofstream & file, ast::Node* node, const int i = 0) {
-        file << std::format("{}[(0:0):{}, {}]", tab(i), node->type.asString(), node->value, node->line);
+        file << std::format("{}[(0:0):{}, {}]", tab(i), lex::name(node->pattern), node->value, node->line);
         exploreRecursion(file, node, i + 1);
     }
 
     void outputRecursion(const ast::Node* node, const int i = 0) {
         for(int j = 0; j < size(node->tokens); j++) {
             const auto n = node->tokens[j];
-            std::cout << std::format("{}{}[({}:{}):{}, {}]", '\n', tab(i), i, j, n->type.asString(), n->value, n->line);
+            std::cout << std::format("{}{}[({}:{}):{}, {}]", '\n', tab(i), i, j, lex::name(n->pattern), n->value, n->line);
             outputRecursion(n, i + 1);
         }
     }
 
     void output(ast::Node* node, const int i = 0) {
-        std::cout << std::endl << std::endl <<  std::format("{}[(0:0):{}, {}]", tab(i), node->type.asString(), node->value, node->line);
+        std::cout << std::endl << std::endl <<  std::format("{}[(0:0):{}, {}]", tab(i), lex::name(node->pattern), node->value, node->line);
         outputRecursion(node, i + 1);
         std::cout.flush();
     }

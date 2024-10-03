@@ -17,7 +17,7 @@ namespace exec {
 
             if(!code) {
                 std::string msg = std::format("Error in opening object-code file with path '{}' at interpretation stage", path);
-                throw compiler::Exception(compiler::Exception::type::RUNTIME, msg);
+                throw compiler::Exception(compiler::Exception::model::RUNTIME, msg);
             }
 
             while(l++, getline(code, line)) {

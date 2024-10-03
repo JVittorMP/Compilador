@@ -45,7 +45,7 @@ namespace sin {
     int OP_MUL(ast::Node* node, cursor & cursor);
 
     int findNonTerminal(enum lex::pattern p, ast::Node* node, sin::cursor & cursor);
-    int isProductionValid(ast::Node* node, sin::cursor & cursor, std::deque<lex::token> & lexemas);
+    int validateProduction(ast::Node* node, sin::cursor & cursor, std::deque<lex::token> & lexemas);
 }
 
 namespace ast {
@@ -54,7 +54,7 @@ namespace ast {
     void getVars(std::deque<ast::Node*> & v, const ast::Node* cur);
     void getDeclarations(std::deque<ast::Node*> & dc, const ast::Node* cur);
     void getCmds(std::deque<ast::Node*> & cmds, const ast::Node* cur);
-    void avaluateNegNum(ast::Node* & cur);
+    void evaluateNegNum(ast::Node* & cur);
     void orderAtribution(ast::Node* & node);
     void orderConditionals(ast::Node* & node);
     void orderOutput(ast::Node* & node);

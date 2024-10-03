@@ -5,29 +5,29 @@ namespace ast {
 
     class Node {
     public:
-        lex::Type type;
+        lex::pattern pattern = lex::VAZIO;
         std::string value;
         unsigned line = 0;
         std::deque<Node*> tokens;
 
         Node() = default;
-        explicit Node(lex::Type type): type(type), value(type.asValue()) {}
-        explicit Node(const lex::token& t): type(t.type), value(t.value), line(t.linha) {}
-        Node(const lex::Type type, std::string value):
-                type(type), value(std::move(value)) {}
-        Node(const lex::Type type, std::string value, unsigned line):
-            type(type), value(std::move(value)), line(line) {}
+        explicit Node(lex::pattern type): pattern(type), value(lex::value(pattern)) {}
+        explicit Node(const lex::token & t): pattern(t.pattern), value(t.value), line(t.linha) {}
+        Node(const lex::pattern type, std::string value):
+                pattern(type), value(std::move(value)) {}
+        Node(const lex::pattern type, std::string value, unsigned line):
+                pattern(type), value(std::move(value)), line(line) {}
 
 
-        static Node* pointer(const lex::Type type, std::string value, unsigned line) {
+        static Node* pointer(lex::pattern type, std::string value, unsigned line) {
             return new Node(type, std::move(value), line);
         }
 
-        static Node* pointer(const lex::Type type, std::string value) {
+        static Node* pointer(lex::pattern type, std::string value) {
             return new Node(type, std::move(value));
         }
 
-        static Node* pointer(const lex::Type type) {
+        static Node* pointer(lex::pattern type) {
             return new Node(type);
         }
 
@@ -36,9 +36,14 @@ namespace ast {
         }
 
         bool operator==(const Node* & node) const {
-            return std::tie(this->type, this->value) == std::tie(node->type, node->value);
+            return std::tie(this->pattern, this->value) == std::tie(node->pattern, node->value);
+        }
+
+        Node* operator [](int x) {
+            return tokens[x];
         }
     };
+
 }
 
 #endif

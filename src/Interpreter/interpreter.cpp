@@ -109,7 +109,7 @@ void exec::interpret(exec::Interpreter & interpreter) {
             case cmd::command::DIVI: {
                 const double s = interpreter.popStack();
                 const double f = interpreter.popStack();
-                if(s == 0) throw compiler::Exception(compiler::Exception::type::RUNTIME, "Division by 0");
+                if(s == 0) throw compiler::Exception(compiler::Exception::model::RUNTIME, "Division by 0");
                 interpreter.dados.push(f / s);
                 break;
             }
@@ -143,7 +143,7 @@ void exec::interpret(exec::Interpreter & interpreter) {
                 break;
             case cmd::command::ERRO:
                 const std::string msg = std::format("Erro no Comando [{}]: {}", i, cmd.toString());
-                throw compiler::Exception(compiler::Exception::type::RUNTIME, msg);
+                throw compiler::Exception(compiler::Exception::model::RUNTIME, msg);
         }
         if(jump) jump = false;
         else i++;

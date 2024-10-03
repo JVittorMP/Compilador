@@ -36,7 +36,7 @@ namespace sem {
                     return true;
                 }
             }
-            throw compiler::Exception(compiler::Exception::type::SEMANTIC, std::format("Variavel [{}] Desconhecida!", id));
+            throw compiler::Exception(compiler::Exception::model::SEMANTIC, std::format("Variavel [{}] Desconhecida!", id));
         }
 
         double returnVarValue(const std::string & id) {
