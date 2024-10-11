@@ -24,9 +24,6 @@ int sin::findNonTerminal(const enum lex::pattern p, ast::Node* node, sin::cursor
         case lex::pattern::DC:
             if(DC(node, cursor)) return SUCCESS;
             return FAIL;
-        case lex::pattern::MAIS_DC:
-            if(MAIS_DC(node, cursor)) return SUCCESS;
-            return FAIL;
         case lex::pattern::VAR:
             if(VAR(node, cursor)) return SUCCESS;
             return FAIL;
@@ -111,16 +108,16 @@ int sin::findNonTerminal(const enum lex::pattern p, ast::Node* node, sin::cursor
 int sin::validateProduction(ast::Node* node, sin::cursor & cursor, std::deque<lex::token> & lexemas) {
     for(auto & lexema : lexemas) {
         if(cursor.token().value == "$") return FAIL;
-        if(lex::terminal(lexema.type)) {
-            if(lexema.type == lex::pattern::IDENTIFIER && cursor.token().type == lex::pattern::IDENTIFIER) {
+        if(lex::terminal(lexema.pattern)) {
+            if(lexema.pattern == lex::pattern::IDENTIFIER && cursor.token().pattern == lex::pattern::IDENTIFIER) {
 
             } else if(lexema.value != cursor.token().value) return FAIL;
             node->tokens.push_back(ast::Node::pointer(cursor.token()));
             cursor.next();
         } else {
-            auto novo = ast::Node::pointer(lexema.type, lexema.value);
+            auto novo = ast::Node::pointer(lexema.pattern, lexema.value);
             node->tokens.push_back(novo);
-            if(!findNonTerminal(lexema.type, novo, cursor)) return FAIL;
+            if(!findNonTerminal(lexema.pattern, novo, cursor)) return FAIL;
         }
     }
     return SUCCESS;
@@ -211,24 +208,11 @@ int sin::MAIS_PARAMS(ast::Node* node, cursor & cursor) {
 int sin::DC(ast::Node* node, cursor & cursor) {
     std::deque<lex::token> lexemas;
     lexemas.emplace_back(lex::pattern::VAR);
-    lexemas.emplace_back(lex::pattern::MAIS_DC);
-
-    auto value = cursor.token().value;
-    if(value == lex::value(lex::pattern::DOUBLE)) {
-        if(validateProduction(node, cursor, lexemas)) return SUCCESS;
-        return FAIL;
-    }
-    node->tokens.push_back(ast::Node::pointer(lex::pattern::VAZIO));
-    return SUCCESS;
-}
-
-int sin::MAIS_DC(ast::Node* node, cursor & cursor) {
-    std::deque<lex::token> lexemas;
     lexemas.emplace_back(lex::pattern::PONTO_VIRGULA);
     lexemas.emplace_back(lex::pattern::DC);
 
     auto value = cursor.token().value;
-    if(value == lex::value(lex::pattern::PONTO_VIRGULA)) {
+    if(value == lex::value(lex::pattern::DOUBLE)) {
         if(validateProduction(node, cursor, lexemas)) return SUCCESS;
         return FAIL;
     }
@@ -276,7 +260,7 @@ int sin::TIPO(ast::Node* node, cursor & cursor) {
 int sin::CMDS(ast::Node* node, cursor & cursor) {
     std::deque<lex::token> lexemas;
 
-    auto pattern = cursor.token().type;
+    auto pattern = cursor.token().pattern;
     auto value = cursor.token().value;
     if (pattern == lex::pattern::IDENTIFIER || value == lex::value(lex::pattern::OUTPUT)) {
         lexemas.emplace_back(lex::pattern::CMD);
@@ -327,7 +311,7 @@ int sin::CONDITIONAL_CMD(ast::Node* node, cursor & cursor) {
 int sin::CMD(ast::Node* node, cursor & cursor) {
     std::deque<lex::token> lexemas;
 
-    auto type = cursor.token().type;
+    auto type = cursor.token().pattern;
     auto value = cursor.token().value;
     if(value == lex::value(lex::pattern::OUTPUT)) {
         lexemas.emplace_back(lex::pattern::OUTPUT);
@@ -383,7 +367,7 @@ int sin::LISTA_ARG(ast::Node* node, cursor & cursor) {
     std::deque<lex::token> lexemas;
     lexemas.emplace_back(lex::pattern::ARGUMENTOS);
 
-    auto type = cursor.token().type;
+    auto type = cursor.token().pattern;
     if(type == lex::pattern::IDENTIFIER) {
         if(validateProduction(node, cursor, lexemas)) return SUCCESS;
         return FAIL;
@@ -397,7 +381,7 @@ int sin::ARGUMENTOS(ast::Node* node, cursor & cursor) {
     lexemas.emplace_back(lex::pattern::IDENTIFIER);
     lexemas.emplace_back(lex::pattern::MAIS_IDENT);
 
-    auto pattern = cursor.token().type;
+    auto pattern = cursor.token().pattern;
     if(pattern == lex::pattern::IDENTIFIER) {
         if(validateProduction(node, cursor, lexemas)) return SUCCESS;
     }
@@ -422,7 +406,7 @@ int sin::EXP_IDENT(ast::Node* node, cursor & cursor) {
     std::deque<lex::token> lexemas;
     lexemas.emplace_back(lex::pattern::EXPRESSAO);
 
-    auto type = cursor.token().type;
+    auto type = cursor.token().pattern;
     auto value = cursor.token().value;
     if( type == lex::pattern::IDENTIFIER ||
         type == lex::pattern::NUM ||
@@ -446,7 +430,7 @@ int sin::CONDICAO(ast::Node* node, cursor & cursor) {
     lexemas.emplace_back(lex::pattern::RELACAO);
     lexemas.emplace_back(lex::pattern::EXPRESSAO);
 
-    auto pattern = cursor.token().type;
+    auto pattern = cursor.token().pattern;
     auto value = cursor.token().value;
     if (pattern == lex::pattern::IDENTIFIER ||
         pattern == lex::pattern::NUM ||
@@ -459,7 +443,7 @@ int sin::CONDICAO(ast::Node* node, cursor & cursor) {
 }
 
 int sin::RELACAO(ast::Node* node, cursor & cursor) {
-    if(cursor.token().type == lex::pattern::OPERATOR) {
+    if(cursor.token().pattern == lex::pattern::OPERATOR) {
         node->tokens.push_back(ast::Node::pointer(cursor.token()));
         cursor.next();
         return SUCCESS;
@@ -472,7 +456,7 @@ int sin::EXPRESSAO(ast::Node* node, cursor & cursor) {
     lexemas.emplace_back(lex::pattern::TERMO);
     lexemas.emplace_back(lex::pattern::OUTROS_TERMOS);
 
-    auto pattern = cursor.token().type;
+    auto pattern = cursor.token().pattern;
     auto value = cursor.token().value;
     if (pattern == lex::pattern::IDENTIFIER ||
         pattern == lex::pattern::NUM ||
@@ -490,7 +474,7 @@ int sin::TERMO(ast::Node* node, cursor & cursor) {
     lexemas.emplace_back(lex::pattern::FATOR);
     lexemas.emplace_back(lex::pattern::MAIS_FATORES);
 
-    auto pattern = cursor.token().type;
+    auto pattern = cursor.token().pattern;
     auto value = cursor.token().value;
     if( pattern == lex::pattern::IDENTIFIER ||
         pattern == lex::pattern::NUM ||
@@ -514,7 +498,7 @@ int sin::OP_UN(ast::Node* node, cursor & cursor) {
 }
 
 int sin::FATOR(ast::Node* node, cursor & cursor) {
-    auto pattern = cursor.token().type;
+    auto pattern = cursor.token().pattern;
     auto value = cursor.token().value;
 
     if(pattern == lex::pattern::IDENTIFIER || pattern == lex::pattern::NUM) {

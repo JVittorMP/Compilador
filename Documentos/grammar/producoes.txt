@@ -3,8 +3,7 @@ INIT                public      public static void main () { <CMDS> }
 METODO [$]	        public      public static <TIPO> id ( <PARAMS> )  { <CMDS> return <EXPRESSAO> ; }
 PARAMS [$]	        double      <TIPO> id<MAIS_PARAMS>
 MAIS_PARAMS [$] 	,           , <PARAMS>
-DC [$]	            double      <VAR> <MAIS_DC>
-MAIS_DC [$]	        ;           ; <DC>
+DC [$]	            double      <VAR>;<DC>
 VAR	                double      <TIPO> <VARS>
 VARS	            <id>        id<MAIS_VAR>
 MAIS_VAR [$]	    ,           ,<VARS>

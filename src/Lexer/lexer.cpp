@@ -16,7 +16,7 @@ std::deque<lex::token> lex::scan(const std::string &input) {
     std::deque<lex::token> tokens;
     ::scan(tokens);
     for(const auto& tk : tokens) {
-        if(tk.type != lex::pattern::ERROR) continue;
+        if(tk.pattern != lex::pattern::ERROR) continue;
         throw compiler::Exception(compiler::Exception::model::LEXICAL, tk.value);
     }
     std::cout << "Lexical Analysis Concluded!" << std::endl;

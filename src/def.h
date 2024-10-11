@@ -19,7 +19,6 @@ namespace sin {
     int PARAMS(ast::Node* node, cursor & cursor);
     int MAIS_PARAMS(ast::Node* node, cursor & cursor);
     int DC(ast::Node* node, cursor & cursor);
-    int MAIS_DC(ast::Node* node, cursor & cursor);
     int VAR(ast::Node* node, cursor & cursor);
     int VARS(ast::Node* node, cursor & cursor);
     int MAIS_VAR(ast::Node* node, cursor & cursor);

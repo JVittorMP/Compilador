@@ -66,7 +66,6 @@ namespace lex {
         ARGUMENTOS,
         INPUT,
         VAR,
-        MAIS_DC,
         CONDITIONAL_CMD,
         CMD,
         RELACAO,
@@ -143,7 +142,6 @@ namespace lex {
             case pattern::ARGUMENTOS: return "ARGUMENTOS";
             case pattern::INPUT: return "lerDouble()";
             case pattern::VAR: return "VAR";
-            case pattern::MAIS_DC: return "MAIS_DC";
             case pattern::CONDITIONAL_CMD: return "CONDITIONAL_CMD";
             case pattern::CMD: return "CMD";
             case pattern::RELACAO: return "RELACAO";
@@ -221,7 +219,6 @@ namespace lex {
             case pattern::ARGUMENTOS: return "ARGUMENTOS";
             case pattern::INPUT: return "INPUT";
             case pattern::VAR: return "VAR";
-            case pattern::MAIS_DC: return "MAIS_DC";
             case pattern::CONDITIONAL_CMD: return "CONDITIONAL_CMD";
             case pattern::CMD: return "CMD";
             case pattern::RELACAO: return "RELACAO";
@@ -261,7 +258,6 @@ namespace lex {
             case pattern::MAIS_IDENT:
             case pattern::ARGUMENTOS:
             case pattern::VAR:
-            case pattern::MAIS_DC:
             case pattern::CONDITIONAL_CMD:
             case pattern::CMD:
             case pattern::RELACAO:
@@ -330,7 +326,6 @@ namespace lex {
         if (s == "PFALSA") return pattern::PFALSA;
         if (s == "METODO") return pattern::METODO;
         if (s == "PARAMS") return pattern::PARAMS;
-        if (s == "MAIS_DC") return pattern::MAIS_DC;
         if (s == "MAIS_VAR") return pattern::MAIS_VAR;
         if (s == "CONDICAO") return pattern::CONDICAO;
         if (s == "EXPRESSAO") return pattern::EXPRESSAO;

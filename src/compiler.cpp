@@ -6,7 +6,7 @@
 #include "Generator/generator.cpp"
 
 int main() {
-    const std::string inputFile = "../Documentos/input/mini-java-exemplo.java";
+    const std::string inputFile = "../Documentos/input/input-05.txt";
 
     try {
         const std::deque<lex::token> tokens = lex::scan(inputFile);

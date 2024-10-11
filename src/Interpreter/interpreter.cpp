@@ -151,8 +151,10 @@ void exec::interpret(exec::Interpreter & interpreter) {
 }
 
 int main() {
+    const std::string file = "../Documentos/code/code.txt";
+
     try {
-        exec::Interpreter interpreter("../Documentos/code/code.txt");
+        exec::Interpreter interpreter(file);
         exec::interpret(interpreter);
     } catch(compiler::Exception & e) {
         std::cerr << e.what() << std::endl;
